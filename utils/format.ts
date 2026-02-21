@@ -1,6 +1,9 @@
-export function formatDistance(miles: number, precision: '0.1' | '0.01' = '0.1'): string {
+const MILES_TO_KM = 1.60934;
+
+export function formatDistance(miles: number, precision: '0.1' | '0.01' = '0.1', unit: 'miles' | 'km' = 'miles'): string {
   const decimals = precision === '0.1' ? 1 : 2;
-  return miles.toFixed(decimals);
+  const value = unit === 'km' ? miles * MILES_TO_KM : miles;
+  return value.toFixed(decimals);
 }
 
 export function formatDuration(seconds: number): string {
@@ -22,8 +25,9 @@ export function formatDurationLong(seconds: number): string {
   return '<1m';
 }
 
-export function formatSpeed(mph: number): string {
-  return mph.toFixed(0);
+export function formatSpeed(mph: number, unit: 'miles' | 'km' = 'miles'): string {
+  const value = unit === 'km' ? mph * MILES_TO_KM : mph;
+  return value.toFixed(0);
 }
 
 export function formatDate(timestamp: number): string {

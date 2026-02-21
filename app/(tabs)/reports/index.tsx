@@ -83,12 +83,13 @@ export default function ReportsScreen() {
       return;
     }
 
-    const header = 'Date,Start Time,End Time,Distance (mi),Duration (min),Purpose,Project,Notes';
+    const distLabel = settings.distanceUnit === 'km' ? 'km' : 'mi';
+    const header = `Date,Start Time,End Time,Distance (${distLabel}),Duration (min),Purpose,Project,Notes`;
     const rows = filteredTrips.map((tr) => {
       const date = formatDate(tr.startTime);
       const start = new Date(tr.startTime).toLocaleTimeString();
       const end = new Date(tr.endTime).toLocaleTimeString();
-      const dist = formatDistance(tr.distance, settings.rounding);
+      const dist = formatDistance(tr.distance, settings.rounding, settings.distanceUnit);
       const dur = Math.round(tr.duration / 60);
       const purpose = tr.purpose;
       const project = getProjectName(tr.projectId) ?? '';
@@ -149,9 +150,9 @@ export default function ReportsScreen() {
       <View style={styles.overviewRow}>
         <View style={styles.overviewCard}>
           <Text style={styles.overviewValue}>
-            {formatDistance(totalDistance, settings.rounding)}
+            {formatDistance(totalDistance, settings.rounding, settings.distanceUnit)}
           </Text>
-          <Text style={styles.overviewLabel}>{t.totalMiles}</Text>
+          <Text style={styles.overviewLabel}>{settings.distanceUnit === 'km' ? t.totalKm : t.totalMiles}</Text>
         </View>
         <View style={styles.overviewCard}>
           <Text style={styles.overviewValue}>{filteredTrips.length}</Text>
@@ -196,7 +197,7 @@ export default function ReportsScreen() {
                 />
               </View>
               <Text style={styles.breakdownDistance}>
-                {formatDistance(data.distance, settings.rounding)} {t.mi}
+                {formatDistance(data.distance, settings.rounding, settings.distanceUnit)} {settings.distanceUnit === 'km' ? t.km : t.mi}
               </Text>
             </View>
           );

@@ -16,6 +16,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   lockTripsAfter24h: false,
   allowEdits: true,
   autoDetectDriving: false,
+  distanceUnit: 'miles',
 };
 
 export const [TripProvider, useTrips] = createContextHook(() => {

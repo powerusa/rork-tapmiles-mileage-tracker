@@ -171,9 +171,9 @@ export default function HomeScreen() {
             <View style={styles.statItem}>
               <Navigation size={16} color={Colors.textSecondary} />
               <Text style={styles.statValue}>
-                {formatDistance(distance, settings.rounding)}
+                {formatDistance(distance, settings.rounding, settings.distanceUnit)}
               </Text>
-              <Text style={styles.statUnit}>{t.mi}</Text>
+              <Text style={styles.statUnit}>{settings.distanceUnit === 'km' ? t.km : t.mi}</Text>
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
@@ -183,8 +183,8 @@ export default function HomeScreen() {
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
               <Gauge size={16} color={Colors.textSecondary} />
-              <Text style={styles.statValue}>{formatSpeed(currentSpeed)}</Text>
-              <Text style={styles.statUnit}>{t.mph}</Text>
+              <Text style={styles.statValue}>{formatSpeed(currentSpeed, settings.distanceUnit)}</Text>
+              <Text style={styles.statUnit}>{settings.distanceUnit === 'km' ? t.kmh : t.mph}</Text>
             </View>
           </Animated.View>
         )}
@@ -267,7 +267,7 @@ export default function HomeScreen() {
                   </Text>
                 </View>
                 <Text style={styles.lastTripDistance}>
-                  {formatDistance(lastTrip.distance, settings.rounding)} {t.mi}
+                  {formatDistance(lastTrip.distance, settings.rounding, settings.distanceUnit)} {settings.distanceUnit === 'km' ? t.km : t.mi}
                 </Text>
               </View>
               <Text style={styles.lastTripMeta}>

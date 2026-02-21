@@ -13,6 +13,7 @@ import { useI18n } from '@/providers/I18nProvider';
 import { TripCard } from '@/components/TripCard';
 import { Colors } from '@/constants/colors';
 import { TripPurpose } from '@/types/trip';
+import { formatDistance } from '@/utils/format';
 
 export default function TripsScreen() {
   const router = useRouter();
@@ -80,7 +81,7 @@ export default function TripsScreen() {
             {filteredTrips.length} {filteredTrips.length !== 1 ? t.trips : t.trip}
           </Text>
           <Text style={styles.summaryDistance}>
-            {totalDistance.toFixed(1)} {t.mi} {t.total}
+            {formatDistance(totalDistance, settings.rounding, settings.distanceUnit)} {settings.distanceUnit === 'km' ? t.km : t.mi} {t.total}
           </Text>
         </View>
       )}
@@ -93,6 +94,7 @@ export default function TripsScreen() {
           <TripCard
             trip={item}
             rounding={settings.rounding}
+            distanceUnit={settings.distanceUnit}
             projectName={getProjectName(item.projectId)}
             vehicleName={getVehicleName(item.vehicleId)}
             onPress={() => handleTripPress(item.id)}

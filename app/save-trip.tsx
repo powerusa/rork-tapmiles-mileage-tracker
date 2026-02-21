@@ -127,7 +127,7 @@ export default function SaveTripScreen() {
       >
         <View style={styles.summaryCard}>
           <Text style={styles.summaryDistance}>
-            {formatDistance(pendingTrip.distance, settings.rounding)} {t.mi}
+            {formatDistance(pendingTrip.distance, settings.rounding, settings.distanceUnit)} {settings.distanceUnit === 'km' ? t.km : t.mi}
           </Text>
           <Text style={styles.summaryDuration}>
             {formatDurationLong(pendingTrip.duration)}

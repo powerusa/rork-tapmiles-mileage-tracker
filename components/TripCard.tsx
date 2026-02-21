@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { ChevronRight } from 'lucide-react-native';
-import { Trip } from '@/types/trip';
+import { Trip, DistanceUnit } from '@/types/trip';
 import { useI18n } from '@/providers/I18nProvider';
 import { Colors } from '@/constants/colors';
 import { formatDistance, formatDateShort, formatTime, formatDurationLong } from '@/utils/format';
@@ -9,12 +9,13 @@ import { formatDistance, formatDateShort, formatTime, formatDurationLong } from 
 interface TripCardProps {
   trip: Trip;
   rounding: '0.1' | '0.01';
+  distanceUnit?: DistanceUnit;
   projectName: string | null;
   vehicleName: string | null;
   onPress: () => void;
 }
 
-function TripCardComponent({ trip, rounding, projectName, vehicleName, onPress }: TripCardProps) {
+function TripCardComponent({ trip, rounding, distanceUnit = 'miles', projectName, vehicleName, onPress }: TripCardProps) {
   const purposeColor = Colors.purposes[trip.purpose] ?? Colors.textSecondary;
   const { t } = useI18n();
 
@@ -45,7 +46,7 @@ function TripCardComponent({ trip, rounding, projectName, vehicleName, onPress }
             </Text>
           </View>
           <Text style={styles.distance}>
-            {formatDistance(trip.distance, rounding)} {t.mi}
+            {formatDistance(trip.distance, rounding, distanceUnit)} {distanceUnit === 'km' ? t.km : t.mi}
           </Text>
         </View>
         <Text style={styles.dateText}>

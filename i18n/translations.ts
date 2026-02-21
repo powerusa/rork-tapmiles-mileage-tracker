@@ -95,6 +95,14 @@ export interface Translations {
   aboutDisclaimer: string;
   language: string;
   deviceLanguage: string;
+  distanceUnit: string;
+  milesUnit: string;
+  kilometersUnit: string;
+  km: string;
+  kmh: string;
+  totalKm: string;
+  avgKmh: string;
+  kilometers: string;
 
   ok: string;
   error: string;
@@ -200,6 +208,14 @@ const en: Translations = {
   aboutDisclaimer: 'TapMiles is a mileage tracking tool for personal use. It is not a tax, legal, or medical advisor. Always verify mileage records with your tax professional.',
   language: 'Language',
   deviceLanguage: 'Device Language',
+  distanceUnit: 'Distance Unit',
+  milesUnit: 'Miles',
+  kilometersUnit: 'Kilometers',
+  km: 'km',
+  kmh: 'km/h',
+  totalKm: 'Total Km',
+  avgKmh: 'Avg km/h',
+  kilometers: 'kilometers',
 
   ok: 'OK',
   error: 'Error',
@@ -305,6 +321,14 @@ const es: Translations = {
   aboutDisclaimer: 'TapMiles es una herramienta de seguimiento de kilometraje para uso personal. No es un asesor fiscal, legal o médico. Siempre verifica los registros con tu profesional fiscal.',
   language: 'Idioma',
   deviceLanguage: 'Idioma del dispositivo',
+  distanceUnit: 'Unidad de distancia',
+  milesUnit: 'Millas',
+  kilometersUnit: 'Kilómetros',
+  km: 'km',
+  kmh: 'km/h',
+  totalKm: 'Km Totales',
+  avgKmh: 'Vel. media km/h',
+  kilometers: 'kilómetros',
 
   ok: 'OK',
   error: 'Error',
@@ -410,6 +434,14 @@ const fr: Translations = {
   aboutDisclaimer: 'TapMiles est un outil de suivi de kilométrage personnel. Ce n\'est pas un conseiller fiscal, juridique ou médical. Vérifiez toujours vos données avec un professionnel.',
   language: 'Langue',
   deviceLanguage: 'Langue de l\'appareil',
+  distanceUnit: 'Unité de distance',
+  milesUnit: 'Miles',
+  kilometersUnit: 'Kilomètres',
+  km: 'km',
+  kmh: 'km/h',
+  totalKm: 'Km Totaux',
+  avgKmh: 'Moy. km/h',
+  kilometers: 'kilomètres',
 
   ok: 'OK',
   error: 'Erreur',
@@ -515,6 +547,14 @@ const de: Translations = {
   aboutDisclaimer: 'TapMiles ist ein Kilometerverfolgungstool für den persönlichen Gebrauch. Es ist kein Steuer-, Rechts- oder Medizinberater.',
   language: 'Sprache',
   deviceLanguage: 'Gerätesprache',
+  distanceUnit: 'Entfernungseinheit',
+  milesUnit: 'Meilen',
+  kilometersUnit: 'Kilometer',
+  km: 'km',
+  kmh: 'km/h',
+  totalKm: 'Gesamt Km',
+  avgKmh: 'Ø km/h',
+  kilometers: 'Kilometer',
 
   ok: 'OK',
   error: 'Fehler',
@@ -620,6 +660,14 @@ const pt: Translations = {
   aboutDisclaimer: 'TapMiles é uma ferramenta de rastreamento de quilometragem para uso pessoal. Não é um consultor fiscal, jurídico ou médico.',
   language: 'Idioma',
   deviceLanguage: 'Idioma do dispositivo',
+  distanceUnit: 'Unidade de distância',
+  milesUnit: 'Milhas',
+  kilometersUnit: 'Quilômetros',
+  km: 'km',
+  kmh: 'km/h',
+  totalKm: 'Km Totais',
+  avgKmh: 'Méd. km/h',
+  kilometers: 'quilômetros',
 
   ok: 'OK',
   error: 'Erro',
@@ -725,6 +773,14 @@ const ja: Translations = {
   aboutDisclaimer: 'TapMilesは個人使用のためのマイレージ追跡ツールです。税務、法律、医療のアドバイザーではありません。',
   language: '言語',
   deviceLanguage: '端末の言語',
+  distanceUnit: '距離単位',
+  milesUnit: 'マイル',
+  kilometersUnit: 'キロメートル',
+  km: 'km',
+  kmh: 'km/h',
+  totalKm: '総キロ',
+  avgKmh: '平均km/h',
+  kilometers: 'キロメートル',
 
   ok: 'OK',
   error: 'エラー',
@@ -830,6 +886,14 @@ const zh: Translations = {
   aboutDisclaimer: 'TapMiles是个人使用的里程追踪工具，不是税务、法律或医疗顾问。请始终与税务专业人士核实记录。',
   language: '语言',
   deviceLanguage: '设备语言',
+  distanceUnit: '距离单位',
+  milesUnit: '英里',
+  kilometersUnit: '公里',
+  km: '公里',
+  kmh: '公里/时',
+  totalKm: '总公里',
+  avgKmh: '平均公里/时',
+  kilometers: '公里',
 
   ok: '确定',
   error: '错误',

@@ -39,9 +39,12 @@ export interface Vehicle {
   name: string;
 }
 
+export type DistanceUnit = 'miles' | 'km';
+
 export interface AppSettings {
   rounding: '0.1' | '0.01';
   lockTripsAfter24h: boolean;
   allowEdits: boolean;
   autoDetectDriving: boolean;
+  distanceUnit: DistanceUnit;
 }

@@ -21,6 +21,7 @@ import {
   X,
   Globe,
   ChevronRight,
+  ArrowLeftRight,
 } from 'lucide-react-native';
 import { useTrips } from '@/providers/TripProvider';
 import { useI18n } from '@/providers/I18nProvider';
@@ -144,6 +145,49 @@ export default function SettingsScreen() {
             })}
           </View>
         )}
+
+        <View style={styles.divider} />
+
+        <View style={styles.row}>
+          <View style={styles.rowLeft}>
+            <ArrowLeftRight size={18} color={Colors.textSecondary} />
+            <Text style={styles.rowLabel}>{t.distanceUnit}</Text>
+          </View>
+          <View style={styles.segmentControl}>
+            <Pressable
+              style={[
+                styles.segment,
+                settings.distanceUnit === 'miles' && styles.segmentActive,
+              ]}
+              onPress={() => updateSettings({ distanceUnit: 'miles' })}
+            >
+              <Text
+                style={[
+                  styles.segmentText,
+                  settings.distanceUnit === 'miles' && styles.segmentTextActive,
+                ]}
+              >
+                {t.milesUnit}
+              </Text>
+            </Pressable>
+            <Pressable
+              style={[
+                styles.segment,
+                settings.distanceUnit === 'km' && styles.segmentActive,
+              ]}
+              onPress={() => updateSettings({ distanceUnit: 'km' })}
+            >
+              <Text
+                style={[
+                  styles.segmentText,
+                  settings.distanceUnit === 'km' && styles.segmentTextActive,
+                ]}
+              >
+                {t.kilometersUnit}
+              </Text>
+            </Pressable>
+          </View>
+        </View>
 
         <View style={styles.divider} />
 

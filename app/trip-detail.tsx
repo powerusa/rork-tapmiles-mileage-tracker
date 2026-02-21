@@ -51,8 +51,10 @@ export default function TripDetailScreen() {
   const purposeColor = Colors.purposes[trip.purpose] ?? Colors.textSecondary;
   const projectName = getProjectName(trip.projectId);
   const vehicleName = getVehicleName(trip.vehicleId);
-  const avgSpeed =
-    trip.duration > 0 ? (trip.distance / (trip.duration / 3600)).toFixed(1) : '0';
+  const avgSpeedMph = trip.duration > 0 ? trip.distance / (trip.duration / 3600) : 0;
+  const avgSpeed = settings.distanceUnit === 'km'
+    ? (avgSpeedMph * 1.60934).toFixed(1)
+    : avgSpeedMph.toFixed(1);
 
   return (
     <View style={styles.container}>
@@ -79,9 +81,9 @@ export default function TripDetailScreen() {
             </Text>
           </View>
           <Text style={styles.heroDistance}>
-            {formatDistance(trip.distance, settings.rounding)}
+            {formatDistance(trip.distance, settings.rounding, settings.distanceUnit)}
           </Text>
-          <Text style={styles.heroUnit}>{t.miles}</Text>
+          <Text style={styles.heroUnit}>{settings.distanceUnit === 'km' ? t.kilometers : t.miles}</Text>
         </View>
 
         <View style={styles.statsGrid}>
@@ -93,7 +95,7 @@ export default function TripDetailScreen() {
           <View style={styles.statCard}>
             <Gauge size={18} color={Colors.accent} />
             <Text style={styles.statValue}>{avgSpeed}</Text>
-            <Text style={styles.statLabel}>{t.avgMph}</Text>
+            <Text style={styles.statLabel}>{settings.distanceUnit === 'km' ? t.avgKmh : t.avgMph}</Text>
           </View>
           <View style={styles.statCard}>
             <MapPin size={18} color={Colors.accent} />
