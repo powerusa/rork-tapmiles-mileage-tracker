@@ -7,7 +7,11 @@ import { TripProvider } from "@/providers/TripProvider";
 import { TrackingProvider } from "@/providers/TrackingProvider";
 import { I18nProvider } from "@/providers/I18nProvider";
 import { Colors } from "@/constants/colors";
-import '@/utils/backgroundLocation';
+import { Platform } from 'react-native';
+
+if (Platform.OS !== 'web') {
+  require('@/utils/backgroundLocation');
+}
 
 SplashScreen.preventAutoHideAsync();
 

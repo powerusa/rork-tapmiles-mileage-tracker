@@ -1,5 +1,4 @@
-import * as TaskManager from 'expo-task-manager';
-import * as Location from 'expo-location';
+import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { RoutePoint } from '@/types/trip';
 import { haversineDistance } from '@/utils/location';
@@ -42,56 +41,61 @@ export async function clearPersistedState(): Promise<void> {
   }
 }
 
-TaskManager.defineTask(BACKGROUND_LOCATION_TASK, async ({ data, error }) => {
-  if (error) {
-    console.log('TapMiles: Background location error:', error.message);
-    return;
-  }
+if (Platform.OS !== 'web') {
+  const TaskManager = require('expo-task-manager');
+  const Location = require('expo-location');
 
-  const locationData = data as { locations?: Location.LocationObject[] };
-  if (!locationData.locations || locationData.locations.length === 0) return;
+  TaskManager.defineTask(BACKGROUND_LOCATION_TASK, async ({ data, error }: { data: unknown; error: { message: string } | null }) => {
+    if (error) {
+      console.log('TapMiles: Background location error:', error.message);
+      return;
+    }
 
-  console.log('TapMiles: Background received', locationData.locations.length, 'locations');
+    const locationData = data as { locations?: { coords: { latitude: number; longitude: number; speed: number | null; accuracy: number | null }; timestamp: number }[] };
+    if (!locationData.locations || locationData.locations.length === 0) return;
 
-  const state = await getPersistedState();
-  if (!state || !state.isTracking) return;
+    console.log('TapMiles: Background received', locationData.locations.length, 'locations');
 
-  let { distance, routePoints, lastPoint } = state;
+    const state = await getPersistedState();
+    if (!state || !state.isTracking) return;
 
-  for (const loc of locationData.locations) {
-    const point: RoutePoint = {
-      latitude: loc.coords.latitude,
-      longitude: loc.coords.longitude,
-      timestamp: loc.timestamp,
-      speed: loc.coords.speed ?? 0,
-      accuracy: loc.coords.accuracy ?? 999,
-    };
+    let { distance, routePoints, lastPoint } = state;
 
-    if (point.accuracy > 50) continue;
+    for (const loc of locationData.locations) {
+      const point: RoutePoint = {
+        latitude: loc.coords.latitude,
+        longitude: loc.coords.longitude,
+        timestamp: loc.timestamp,
+        speed: loc.coords.speed ?? 0,
+        accuracy: loc.coords.accuracy ?? 999,
+      };
 
-    if (lastPoint) {
-      const d = haversineDistance(
-        lastPoint.latitude,
-        lastPoint.longitude,
-        point.latitude,
-        point.longitude
-      );
-      if (d > 0.001 && d < 0.5) {
-        distance += d;
+      if (point.accuracy > 50) continue;
+
+      if (lastPoint) {
+        const d = haversineDistance(
+          lastPoint.latitude,
+          lastPoint.longitude,
+          point.latitude,
+          point.longitude
+        );
+        if (d > 0.001 && d < 0.5) {
+          distance += d;
+        }
+      }
+
+      lastPoint = point;
+
+      if (routePoints.length < 5000) {
+        routePoints.push(point);
       }
     }
 
-    lastPoint = point;
-
-    if (routePoints.length < 5000) {
-      routePoints.push(point);
-    }
-  }
-
-  await persistState({
-    ...state,
-    distance,
-    routePoints,
-    lastPoint,
+    await persistState({
+      ...state,
+      distance,
+      routePoints,
+      lastPoint,
+    });
   });
-});
+}
