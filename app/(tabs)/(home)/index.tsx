@@ -265,7 +265,7 @@ export default function HomeScreen() {
           >
             <Car size={16} color={Colors.accent} />
             <Text style={styles.vehicleSelectorText}>
-              {selectedVehicle?.name ?? 'Car-1'}
+              {selectedVehicle?.name ?? 'Default Auto'}
             </Text>
             <ChevronDown size={14} color={Colors.textMuted} />
           </Pressable>

@@ -13,7 +13,7 @@ const STORAGE_KEYS = {
 } as const;
 
 const DEFAULT_VEHICLE_ID = 'default_car_1';
-const DEFAULT_VEHICLE = { id: DEFAULT_VEHICLE_ID, name: 'Car-1' };
+const DEFAULT_VEHICLE = { id: DEFAULT_VEHICLE_ID, name: 'Default Auto' };
 
 const DEFAULT_SETTINGS: AppSettings = {
   rounding: '0.1',
