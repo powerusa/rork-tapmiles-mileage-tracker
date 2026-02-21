@@ -5,6 +5,7 @@ import {
   StyleSheet,
   FlatList,
   Pressable,
+  RefreshControl,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Filter, Route } from 'lucide-react-native';
@@ -17,7 +18,7 @@ import { formatDistance } from '@/utils/format';
 
 export default function TripsScreen() {
   const router = useRouter();
-  const { trips, settings, getProjectName, getVehicleName } = useTrips();
+  const { trips, settings, getProjectName, getVehicleName, refetchAll, isRefreshing } = useTrips();
   const { t } = useI18n();
   const [activeFilter, setActiveFilter] = useState<TripPurpose | 'all'>('all');
 
@@ -90,6 +91,14 @@ export default function TripsScreen() {
         data={filteredTrips}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={refetchAll}
+            tintColor={Colors.accent}
+            colors={[Colors.accent]}
+          />
+        }
         renderItem={({ item }) => (
           <TripCard
             trip={item}

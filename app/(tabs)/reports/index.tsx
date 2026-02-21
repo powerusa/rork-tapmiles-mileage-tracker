@@ -7,6 +7,7 @@ import {
   Pressable,
   Alert,
   Platform,
+  RefreshControl,
 } from 'react-native';
 import { BarChart3, Download, Calendar } from 'lucide-react-native';
 import { useTrips } from '@/providers/TripProvider';
@@ -18,7 +19,7 @@ import { formatDistance, formatDate } from '@/utils/format';
 type DateRange = '7d' | '30d' | '90d' | 'all';
 
 export default function ReportsScreen() {
-  const { trips, settings, getProjectName } = useTrips();
+  const { trips, settings, getProjectName, refetchAll, isRefreshing } = useTrips();
   const { t } = useI18n();
   const [range, setRange] = useState<DateRange>('30d');
 
@@ -124,7 +125,18 @@ export default function ReportsScreen() {
   const durationMins = Math.floor((totalDuration % 3600) / 60);
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={styles.content}
+      refreshControl={
+        <RefreshControl
+          refreshing={isRefreshing}
+          onRefresh={refetchAll}
+          tintColor={Colors.accent}
+          colors={[Colors.accent]}
+        />
+      }
+    >
       <View style={styles.rangeRow}>
         {rangeOptions.map((opt) => {
           const isActive = range === opt.key;

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import createContextHook from '@nkzw/create-context-hook';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -20,10 +21,12 @@ const DEFAULT_SETTINGS: AppSettings = {
 };
 
 export const [TripProvider, useTrips] = createContextHook(() => {
+  const queryClient = useQueryClient();
   const [trips, setTrips] = useState<Trip[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const tripsQuery = useQuery({
     queryKey: ['trips'],
@@ -188,6 +191,20 @@ export const [TripProvider, useTrips] = createContextHook(() => {
   const isLoading =
     tripsQuery.isLoading || projectsQuery.isLoading || vehiclesQuery.isLoading;
 
+  const refetchAll = useCallback(async () => {
+    setIsRefreshing(true);
+    try {
+      await queryClient.invalidateQueries({ queryKey: ['trips'] });
+      await queryClient.invalidateQueries({ queryKey: ['projects'] });
+      await queryClient.invalidateQueries({ queryKey: ['vehicles'] });
+      await queryClient.invalidateQueries({ queryKey: ['settings'] });
+    } catch (err) {
+      console.log('TapMiles: Refetch error:', err);
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [queryClient]);
+
   return {
     trips,
     projects,
@@ -204,5 +221,7 @@ export const [TripProvider, useTrips] = createContextHook(() => {
     updateSettings,
     getProjectName,
     getVehicleName,
+    refetchAll,
+    isRefreshing,
   };
 });

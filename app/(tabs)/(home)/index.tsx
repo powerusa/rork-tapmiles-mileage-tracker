@@ -6,6 +6,8 @@ import {
   Pressable,
   Animated,
   StatusBar,
+  ScrollView,
+  RefreshControl,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -30,7 +32,7 @@ export default function HomeScreen() {
     startTracking,
     stopTracking,
   } = useTracking();
-  const { trips, settings } = useTrips();
+  const { trips, settings, refetchAll, isRefreshing } = useTrips();
 
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const ringAnim = useRef(new Animated.Value(0)).current;
@@ -154,7 +156,18 @@ export default function HomeScreen() {
   }, [lastTrip, t]);
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <ScrollView
+      style={[styles.container, { paddingTop: insets.top }]}
+      contentContainerStyle={styles.scrollContent}
+      refreshControl={
+        <RefreshControl
+          refreshing={isRefreshing}
+          onRefresh={refetchAll}
+          tintColor={Colors.accent}
+          colors={[Colors.accent]}
+        />
+      }
+    >
       <StatusBar barStyle="light-content" />
 
       <View style={styles.header}>
@@ -290,7 +303,7 @@ export default function HomeScreen() {
           </Text>
         </View>
       )}
-    </View>
+    </ScrollView>
   );
 }
 
@@ -300,6 +313,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,
+  },
+  scrollContent: {
+    flexGrow: 1,
   },
   header: {
     flexDirection: 'row',
