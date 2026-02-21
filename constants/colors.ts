@@ -1,0 +1,22 @@
+export const Colors = {
+  background: '#0D1117',
+  surface: '#161B22',
+  card: '#1C2530',
+  cardElevated: '#232D3B',
+  accent: '#00D68F',
+  accentDim: 'rgba(0, 214, 143, 0.12)',
+  accentMuted: '#0B7A54',
+  danger: '#FF4757',
+  dangerDim: 'rgba(255, 71, 87, 0.12)',
+  warning: '#FFBE0B',
+  text: '#ECEFF4',
+  textSecondary: '#8B949E',
+  textMuted: '#484F58',
+  border: '#30363D',
+  purposes: {
+    business: '#4C9AFF',
+    personal: '#00D68F',
+    medical: '#FF6B81',
+    charity: '#FFBE0B',
+  } as Record<string, string>,
+};
