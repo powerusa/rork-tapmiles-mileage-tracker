@@ -22,6 +22,8 @@ import {
   Globe,
   ChevronRight,
   ArrowLeftRight,
+  PenLine,
+  Shield,
 } from 'lucide-react-native';
 import { useTrips } from '@/providers/TripProvider';
 import { useI18n } from '@/providers/I18nProvider';
@@ -37,7 +39,9 @@ export default function SettingsScreen() {
     addProject,
     deleteProject,
     addVehicle,
+    updateVehicle,
     deleteVehicle,
+    defaultVehicleId,
     trips,
   } = useTrips();
 
@@ -48,6 +52,8 @@ export default function SettingsScreen() {
   const [showAddProject, setShowAddProject] = useState(false);
   const [showAddVehicle, setShowAddVehicle] = useState(false);
   const [showLanguagePicker, setShowLanguagePicker] = useState(false);
+  const [editingVehicleId, setEditingVehicleId] = useState<string | null>(null);
+  const [editingVehicleName, setEditingVehicleName] = useState('');
 
   const handleAddProject = () => {
     const name = newProject.trim();
@@ -80,6 +86,10 @@ export default function SettingsScreen() {
   };
 
   const handleDeleteVehicle = (id: string, name: string) => {
+    if (id === defaultVehicleId) {
+      Alert.alert(t.deleteVehicle, t.cannotDeleteDefault, [{ text: t.ok }]);
+      return;
+    }
     const usedCount = trips.filter((tr) => tr.vehicleId === id).length;
     const msg = t.deleteVehicleMsg.replace('{{name}}', name) +
       (usedCount > 0 ? ` ${t.usedInTrips.replace('{{count}}', String(usedCount))}` : '');
@@ -91,6 +101,23 @@ export default function SettingsScreen() {
         { text: t.delete, style: 'destructive', onPress: () => deleteVehicle(id) },
       ]
     );
+  };
+
+  const handleStartRenameVehicle = (id: string, name: string) => {
+    setEditingVehicleId(id);
+    setEditingVehicleName(name);
+  };
+
+  const handleSaveRenameVehicle = () => {
+    const name = editingVehicleName.trim();
+    if (!name || !editingVehicleId) {
+      setEditingVehicleId(null);
+      setEditingVehicleName('');
+      return;
+    }
+    updateVehicle(editingVehicleId, name);
+    setEditingVehicleId(null);
+    setEditingVehicleName('');
   };
 
   const handleSelectLocale = (code: SupportedLocale) => {
@@ -321,18 +348,59 @@ export default function SettingsScreen() {
       <View style={styles.section}>
         {vehicles.map((v) => (
           <View key={v.id}>
-            <View style={styles.row}>
-              <View style={styles.rowLeft}>
-                <Car size={16} color={Colors.textMuted} />
-                <Text style={styles.rowLabel}>{v.name}</Text>
+            {editingVehicleId === v.id ? (
+              <View style={styles.renameRow}>
+                <TextInput
+                  style={styles.renameInput}
+                  value={editingVehicleName}
+                  onChangeText={setEditingVehicleName}
+                  autoFocus
+                  onSubmitEditing={handleSaveRenameVehicle}
+                  selectTextOnFocus
+                />
+                <Pressable onPress={handleSaveRenameVehicle} style={styles.addBtn}>
+                  <Plus size={18} color={Colors.accent} />
+                </Pressable>
+                <Pressable
+                  onPress={() => {
+                    setEditingVehicleId(null);
+                    setEditingVehicleName('');
+                  }}
+                  style={styles.addBtn}
+                >
+                  <X size={18} color={Colors.textMuted} />
+                </Pressable>
               </View>
-              <Pressable
-                onPress={() => handleDeleteVehicle(v.id, v.name)}
-                hitSlop={8}
-              >
-                <Trash2 size={16} color={Colors.danger} />
-              </Pressable>
-            </View>
+            ) : (
+              <View style={styles.row}>
+                <View style={styles.rowLeft}>
+                  <Car size={16} color={Colors.textMuted} />
+                  <Text style={styles.rowLabel}>{v.name}</Text>
+                  {v.id === defaultVehicleId && (
+                    <View style={styles.defaultBadge}>
+                      <Shield size={10} color={Colors.accent} />
+                      <Text style={styles.defaultBadgeText}>{t.defaultVehicle}</Text>
+                    </View>
+                  )}
+                </View>
+                <View style={styles.vehicleActions}>
+                  <Pressable
+                    onPress={() => handleStartRenameVehicle(v.id, v.name)}
+                    hitSlop={8}
+                  >
+                    <PenLine size={15} color={Colors.textSecondary} />
+                  </Pressable>
+                  {v.id !== defaultVehicleId && (
+                    <Pressable
+                      onPress={() => handleDeleteVehicle(v.id, v.name)}
+                      hitSlop={8}
+                    >
+                      <Trash2 size={15} color={Colors.danger} />
+                    </Pressable>
+                  )}
+                </View>
+              </View>
+            )}
             <View style={styles.divider} />
           </View>
         ))}
@@ -542,5 +610,41 @@ const styles = StyleSheet.create({
     color: Colors.textMuted,
     textAlign: 'center' as const,
     marginTop: 8,
+  },
+  vehicleActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+  },
+  defaultBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    backgroundColor: Colors.accentDim,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  defaultBadgeText: {
+    fontSize: 10,
+    fontWeight: '600' as const,
+    color: Colors.accent,
+  },
+  renameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 10,
+  },
+  renameInput: {
+    flex: 1,
+    backgroundColor: Colors.surface,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    fontSize: 15,
+    color: Colors.text,
+    borderWidth: 1,
+    borderColor: Colors.accent,
   },
 });

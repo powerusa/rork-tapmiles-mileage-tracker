@@ -22,7 +22,7 @@ import { formatDistance, formatDurationLong } from '@/utils/format';
 export default function SaveTripScreen() {
   const router = useRouter();
   const { pendingTrip, clearPendingTrip } = useTracking();
-  const { addTrip, projects, vehicles, addProject, addVehicle, settings } = useTrips();
+  const { addTrip, projects, vehicles, addProject, addVehicle, settings, selectedVehicleId } = useTrips();
   const { t } = useI18n();
 
   const PURPOSE_CONFIG: {
@@ -39,7 +39,7 @@ export default function SaveTripScreen() {
 
   const [purpose, setPurpose] = useState<TripPurpose>('business');
   const [selectedProject, setSelectedProject] = useState<string | null>(null);
-  const [selectedVehicle, setSelectedVehicle] = useState<string | null>(null);
+  const [selectedVehicle, setSelectedVehicle] = useState<string | null>(selectedVehicleId);
   const [notes, setNotes] = useState('');
   const [newProjectName, setNewProjectName] = useState('');
   const [newVehicleName, setNewVehicleName] = useState('');

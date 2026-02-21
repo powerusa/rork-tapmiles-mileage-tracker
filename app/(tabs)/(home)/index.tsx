@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useMemo } from 'react';
+import React, { useEffect, useRef, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Navigation, Clock, Gauge, Radio, ChevronRight } from 'lucide-react-native';
+import { Navigation, Clock, Gauge, Radio, ChevronRight, Car, ChevronDown } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTracking } from '@/providers/TrackingProvider';
 import { useTrips } from '@/providers/TripProvider';
@@ -32,7 +32,13 @@ export default function HomeScreen() {
     startTracking,
     stopTracking,
   } = useTracking();
-  const { trips, settings, refetchAll, isRefreshing } = useTrips();
+  const { trips, settings, vehicles, selectedVehicleId, setSelectedVehicleId, refetchAll, isRefreshing } = useTrips();
+  const [showVehiclePicker, setShowVehiclePicker] = useState(false);
+
+  const selectedVehicle = useMemo(
+    () => vehicles.find((v) => v.id === selectedVehicleId) ?? vehicles[0],
+    [vehicles, selectedVehicleId]
+  );
 
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const ringAnim = useRef(new Animated.Value(0)).current;
@@ -248,6 +254,52 @@ export default function HomeScreen() {
           <View style={styles.recordingBadge}>
             <View style={styles.recordingDot} />
             <Text style={styles.recordingText}>{t.recordingTrip}</Text>
+          </View>
+        )}
+
+        {!isTracking && (
+          <Pressable
+            style={styles.vehicleSelector}
+            onPress={() => setShowVehiclePicker(!showVehiclePicker)}
+            testID="vehicle-selector"
+          >
+            <Car size={16} color={Colors.accent} />
+            <Text style={styles.vehicleSelectorText}>
+              {selectedVehicle?.name ?? 'Car-1'}
+            </Text>
+            <ChevronDown size={14} color={Colors.textMuted} />
+          </Pressable>
+        )}
+
+        {showVehiclePicker && !isTracking && (
+          <View style={styles.vehicleDropdown}>
+            {vehicles.map((v) => {
+              const isActive = v.id === selectedVehicleId;
+              return (
+                <Pressable
+                  key={v.id}
+                  style={[
+                    styles.vehicleOption,
+                    isActive && styles.vehicleOptionActive,
+                  ]}
+                  onPress={() => {
+                    setSelectedVehicleId(v.id);
+                    setShowVehiclePicker(false);
+                  }}
+                >
+                  <Car size={14} color={isActive ? Colors.accent : Colors.textMuted} />
+                  <Text
+                    style={[
+                      styles.vehicleOptionText,
+                      isActive && styles.vehicleOptionTextActive,
+                    ]}
+                  >
+                    {v.name}
+                  </Text>
+                  {isActive && <View style={styles.vehicleCheckDot} />}
+                </Pressable>
+              );
+            })}
           </View>
         )}
       </View>
@@ -505,5 +557,60 @@ const styles = StyleSheet.create({
     color: Colors.textMuted,
     textAlign: 'center' as const,
     lineHeight: 18,
+  },
+  vehicleSelector: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: Colors.card,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 20,
+    marginTop: 16,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  vehicleSelectorText: {
+    fontSize: 14,
+    fontWeight: '600' as const,
+    color: Colors.text,
+  },
+  vehicleDropdown: {
+    backgroundColor: Colors.card,
+    borderRadius: 14,
+    marginTop: 8,
+    paddingVertical: 4,
+    paddingHorizontal: 6,
+    width: 200,
+    gap: 2,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  vehicleOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+  },
+  vehicleOptionActive: {
+    backgroundColor: Colors.accentDim,
+  },
+  vehicleOptionText: {
+    fontSize: 14,
+    color: Colors.text,
+    fontWeight: '500' as const,
+    flex: 1,
+  },
+  vehicleOptionTextActive: {
+    color: Colors.accent,
+    fontWeight: '600' as const,
+  },
+  vehicleCheckDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: Colors.accent,
   },
 });
