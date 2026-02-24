@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { Platform, AppState, AppStateStatus } from 'react-native';
+import { Platform, AppState, AppStateStatus, Alert, Linking } from 'react-native';
 import createContextHook from '@nkzw/create-context-hook';
 import * as Location from 'expo-location';
 import * as Haptics from 'expo-haptics';
@@ -203,88 +203,104 @@ export const [TrackingProvider, useTracking] = createContextHook(() => {
   }, []);
 
   const startTracking = useCallback(async () => {
-    if (Platform.OS !== 'web') {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        console.log('TapMiles: Location permission denied');
-        return false;
+    try {
+      if (Platform.OS !== 'web') {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== 'granted') {
+          console.log('TapMiles: Location permission denied');
+          Alert.alert(
+            'Location Permission Required',
+            'TapMiles needs location access to track your drive. Please enable location permissions in Settings.',
+            [
+              { text: 'Cancel', style: 'cancel' },
+              { text: 'Open Settings', onPress: () => Linking.openSettings() },
+            ]
+          );
+          return false;
+        }
       }
-    }
 
-    routePointsRef.current = [];
-    lastPointRef.current = null;
-    distanceRef.current = 0;
-    startTimeRef.current = Date.now();
-    setDistance(0);
-    setElapsedTime(0);
-    setCurrentSpeed(0);
-    setGpsStatus('searching');
-    setIsTracking(true);
-    setPendingTrip(null);
+      routePointsRef.current = [];
+      lastPointRef.current = null;
+      distanceRef.current = 0;
+      startTimeRef.current = Date.now();
+      setDistance(0);
+      setElapsedTime(0);
+      setCurrentSpeed(0);
+      setGpsStatus('searching');
+      setIsTracking(true);
+      setPendingTrip(null);
 
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+      try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy); } catch (_) {}
 
-    await persistState({
-      isTracking: true,
-      startTime: startTimeRef.current,
-      distance: 0,
-      routePoints: [],
-      lastPoint: null,
-    });
+      await persistState({
+        isTracking: true,
+        startTime: startTimeRef.current,
+        distance: 0,
+        routePoints: [],
+        lastPoint: null,
+      });
 
-    startTimer();
+      startTimer();
 
-    if (Platform.OS !== 'web') {
-      await startForegroundWatch();
-      await startBackgroundLocation();
-    } else {
-      setGpsStatus('active');
-      if ('geolocation' in navigator) {
-        webWatchRef.current = navigator.geolocation.watchPosition(
-          (position) => {
-            const point: RoutePoint = {
-              latitude: position.coords.latitude,
-              longitude: position.coords.longitude,
-              timestamp: position.timestamp,
-              speed: position.coords.speed ?? 0,
-              accuracy: position.coords.accuracy ?? 999,
-            };
+      if (Platform.OS !== 'web') {
+        await startForegroundWatch();
+        await startBackgroundLocation();
+      } else {
+        setGpsStatus('active');
+        if ('geolocation' in navigator) {
+          webWatchRef.current = navigator.geolocation.watchPosition(
+            (position) => {
+              const point: RoutePoint = {
+                latitude: position.coords.latitude,
+                longitude: position.coords.longitude,
+                timestamp: position.timestamp,
+                speed: position.coords.speed ?? 0,
+                accuracy: position.coords.accuracy ?? 999,
+              };
 
-            if (point.accuracy > 100) return;
+              if (point.accuracy > 100) return;
 
-            setGpsStatus('active');
-            const speedMph = Math.max(0, metersPerSecondToMph(point.speed));
-            setCurrentSpeed(speedMph);
+              setGpsStatus('active');
+              const speedMph = Math.max(0, metersPerSecondToMph(point.speed));
+              setCurrentSpeed(speedMph);
 
-            if (lastPointRef.current) {
-              const d = haversineDistance(
-                lastPointRef.current.latitude,
-                lastPointRef.current.longitude,
-                point.latitude,
-                point.longitude
-              );
-              if (d > 0.001 && d < 0.5) {
-                distanceRef.current += d;
-                setDistance(distanceRef.current);
+              if (lastPointRef.current) {
+                const d = haversineDistance(
+                  lastPointRef.current.latitude,
+                  lastPointRef.current.longitude,
+                  point.latitude,
+                  point.longitude
+                );
+                if (d > 0.001 && d < 0.5) {
+                  distanceRef.current += d;
+                  setDistance(distanceRef.current);
+                }
               }
-            }
 
-            lastPointRef.current = point;
-            routePointsRef.current.push(point);
-          },
-          (err) => {
-            console.log('TapMiles: Web geolocation error:', err);
-          },
-          { enableHighAccuracy: true, maximumAge: 5000 }
-        );
+              lastPointRef.current = point;
+              routePointsRef.current.push(point);
+            },
+            (err) => {
+              console.log('TapMiles: Web geolocation error:', err);
+            },
+            { enableHighAccuracy: true, maximumAge: 5000 }
+          );
+        }
       }
-    }
 
-    return true;
+      return true;
+    } catch (err) {
+      console.log('TapMiles: startTracking error:', err);
+      setIsTracking(false);
+      setGpsStatus('off');
+      Alert.alert('Unable to Start', 'An error occurred while starting the trip. Please try again.');
+      return false;
+    }
   }, [startTimer, startForegroundWatch, startBackgroundLocation]);
 
   const stopTracking = useCallback(async () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy); } catch (_) {}
 
     if (Platform.OS !== 'web') {
       const saved = await getPersistedState();

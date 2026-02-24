@@ -103,11 +103,15 @@ export default function HomeScreen() {
       }),
     ]).start();
 
-    if (isTracking) {
-      stopTracking();
-      router.push('/save-trip' as any);
-    } else {
-      await startTracking();
+    try {
+      if (isTracking) {
+        await stopTracking();
+        router.push('/save-trip' as any);
+      } else {
+        await startTracking();
+      }
+    } catch (err) {
+      console.log('TapMiles: handlePress error:', err);
     }
   };
 
