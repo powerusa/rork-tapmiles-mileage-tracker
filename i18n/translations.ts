@@ -104,6 +104,13 @@ export interface Translations {
   avgKmh: string;
   kilometers: string;
 
+  renameVehicle: string;
+  renameVehicleMsg: string;
+  rename: string;
+  defaultVehicle: string;
+  selectVehicle: string;
+  cannotDeleteDefault: string;
+
   ok: string;
   error: string;
   at: string;
@@ -216,6 +223,13 @@ const en: Translations = {
   totalKm: 'Total Km',
   avgKmh: 'Avg km/h',
   kilometers: 'kilometers',
+
+  renameVehicle: 'Rename Vehicle',
+  renameVehicleMsg: 'Enter a new name for "{{name}}"',
+  rename: 'Rename',
+  defaultVehicle: 'Default',
+  selectVehicle: 'Select Vehicle',
+  cannotDeleteDefault: 'The default vehicle cannot be deleted, but you can rename it.',
 
   ok: 'OK',
   error: 'Error',
@@ -330,6 +344,13 @@ const es: Translations = {
   avgKmh: 'Vel. media km/h',
   kilometers: 'kilómetros',
 
+  renameVehicle: 'Renombrar Vehículo',
+  renameVehicleMsg: 'Ingresa un nuevo nombre para "{{name}}"',
+  rename: 'Renombrar',
+  defaultVehicle: 'Predeterminado',
+  selectVehicle: 'Seleccionar Vehículo',
+  cannotDeleteDefault: 'El vehículo predeterminado no puede eliminarse, pero puede renombrarse.',
+
   ok: 'OK',
   error: 'Error',
   at: 'a las',
@@ -442,6 +463,13 @@ const fr: Translations = {
   totalKm: 'Km Totaux',
   avgKmh: 'Moy. km/h',
   kilometers: 'kilomètres',
+
+  renameVehicle: 'Véhicule Renommer',
+  renameVehicleMsg: 'Entrez un nouveau nom pour "{{name}}"',
+  rename: 'Renommer',
+  defaultVehicle: 'Par défaut',
+  selectVehicle: 'Sélectionner Véhicule',
+  cannotDeleteDefault: 'Le véhicule par défaut ne peut pas être supprimé, mais il peut être renommé.',
 
   ok: 'OK',
   error: 'Erreur',
@@ -556,6 +584,13 @@ const de: Translations = {
   avgKmh: 'Ø km/h',
   kilometers: 'Kilometer',
 
+  renameVehicle: 'Fahrzeug Umbenennen',
+  renameVehicleMsg: 'Neuen Namen für "{{name}}" eingeben',
+  rename: 'Umbenennen',
+  defaultVehicle: 'Standard',
+  selectVehicle: 'Fahrzeug Wählen',
+  cannotDeleteDefault: 'Das Standardfahrzeug kann nicht gelöscht, aber umbenannt werden.',
+
   ok: 'OK',
   error: 'Fehler',
   at: 'um',
@@ -668,6 +703,13 @@ const pt: Translations = {
   totalKm: 'Km Totais',
   avgKmh: 'Méd. km/h',
   kilometers: 'quilômetros',
+
+  renameVehicle: 'Renomear Veículo',
+  renameVehicleMsg: 'Digite um novo nome para "{{name}}"',
+  rename: 'Renomear',
+  defaultVehicle: 'Padrão',
+  selectVehicle: 'Selecionar Veículo',
+  cannotDeleteDefault: 'O veículo padrão não pode ser excluído, mas pode ser renomeado.',
 
   ok: 'OK',
   error: 'Erro',
@@ -782,6 +824,13 @@ const ja: Translations = {
   avgKmh: '平均km/h',
   kilometers: 'キロメートル',
 
+  renameVehicle: '車両名変更',
+  renameVehicleMsg: '"{{name}}"の新しい名前を入力',
+  rename: '名前変更',
+  defaultVehicle: 'デフォルト',
+  selectVehicle: '車両選択',
+  cannotDeleteDefault: 'デフォルト車両は削除できませんが、名前を変更できます。',
+
   ok: 'OK',
   error: 'エラー',
   at: ' ',
@@ -894,6 +943,13 @@ const zh: Translations = {
   totalKm: '总公里',
   avgKmh: '平均公里/时',
   kilometers: '公里',
+
+  renameVehicle: '重命名车辆',
+  renameVehicleMsg: '为"{{name}}"输入新名称',
+  rename: '重命名',
+  defaultVehicle: '默认',
+  selectVehicle: '选择车辆',
+  cannotDeleteDefault: '默认车辆不能删除，但可以重命名。',
 
   ok: '确定',
   error: '错误',

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import createContextHook from '@nkzw/create-context-hook';
 import { useQuery, useMutation } from '@tanstack/react-query';
@@ -12,6 +12,9 @@ const STORAGE_KEYS = {
   settings: 'tapmiles_settings',
 } as const;
 
+const DEFAULT_VEHICLE_ID = 'default_car_1';
+const DEFAULT_VEHICLE = { id: DEFAULT_VEHICLE_ID, name: 'Default Auto' };
+
 const DEFAULT_SETTINGS: AppSettings = {
   rounding: '0.1',
   lockTripsAfter24h: false,
@@ -24,7 +27,9 @@ export const [TripProvider, useTrips] = createContextHook(() => {
   const queryClient = useQueryClient();
   const [trips, setTrips] = useState<Trip[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
-  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [vehicles, setVehicles] = useState<Vehicle[]>([DEFAULT_VEHICLE]);
+  const [selectedVehicleId, setSelectedVehicleId] = useState<string>(DEFAULT_VEHICLE_ID);
+  const vehiclesInitialized = useRef(false);
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -69,7 +74,17 @@ export const [TripProvider, useTrips] = createContextHook(() => {
   }, [projectsQuery.data]);
 
   useEffect(() => {
-    if (vehiclesQuery.data) setVehicles(vehiclesQuery.data);
+    if (vehiclesQuery.data) {
+      let data = vehiclesQuery.data;
+      if (!data.find((v) => v.id === DEFAULT_VEHICLE_ID)) {
+        data = [DEFAULT_VEHICLE, ...data];
+      }
+      setVehicles(data);
+      if (!vehiclesInitialized.current) {
+        vehiclesInitialized.current = true;
+        setSelectedVehicleId(DEFAULT_VEHICLE_ID);
+      }
+    }
   }, [vehiclesQuery.data]);
 
   useEffect(() => {
@@ -154,13 +169,26 @@ export const [TripProvider, useTrips] = createContextHook(() => {
     [vehicles, persistVehicles]
   );
 
-  const deleteVehicle = useCallback(
-    (id: string) => {
-      const updated = vehicles.filter((v) => v.id !== id);
+  const updateVehicle = useCallback(
+    (id: string, name: string) => {
+      const updated = vehicles.map((v) => (v.id === id ? { ...v, name } : v));
       setVehicles(updated);
       persistVehicles.mutate(updated);
     },
     [vehicles, persistVehicles]
+  );
+
+  const deleteVehicle = useCallback(
+    (id: string) => {
+      if (id === DEFAULT_VEHICLE_ID) return;
+      const updated = vehicles.filter((v) => v.id !== id);
+      setVehicles(updated);
+      persistVehicles.mutate(updated);
+      if (selectedVehicleId === id) {
+        setSelectedVehicleId(DEFAULT_VEHICLE_ID);
+      }
+    },
+    [vehicles, persistVehicles, selectedVehicleId]
   );
 
   const updateSettings = useCallback(
@@ -217,10 +245,14 @@ export const [TripProvider, useTrips] = createContextHook(() => {
     addProject,
     deleteProject,
     addVehicle,
+    updateVehicle,
     deleteVehicle,
     updateSettings,
     getProjectName,
     getVehicleName,
+    selectedVehicleId,
+    setSelectedVehicleId,
+    defaultVehicleId: DEFAULT_VEHICLE_ID,
     refetchAll,
     isRefreshing,
   };
