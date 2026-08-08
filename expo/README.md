@@ -7,6 +7,14 @@ This is a native cross-platform mobile app created with [Rork](https://rork.com)
 **Platform**: Native iOS & Android app, exportable to web
 **Framework**: Expo Router + React Native
 
+## Build and publishing note
+
+- Xcode Cloud is intentionally deactivated because the generated `ios/` directory is not committed to this repository.
+- Build and submit the iOS app with Expo EAS Build, not Xcode Cloud.
+- Before the first iOS build or App Store submission, change the iOS bundle identifier to `com.powerusa.tapmiles`. Do not change it after the App Store Connect app record has been established.
+- The Android application ID used by Google Play is `com.powerusa.tapmiles`.
+- Keep this note in mind when changing CI, native project generation, or store configuration.
+
 ## How can I edit this code?
 
 There are several ways of editing your native mobile application.
