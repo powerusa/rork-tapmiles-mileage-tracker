@@ -13,7 +13,8 @@ This is a native cross-platform mobile app created with [Rork](https://rork.com)
 - Build and submit the iOS app with Expo EAS Build, not Xcode Cloud.
 - Before the first iOS build or App Store submission, change the iOS bundle identifier to `com.powerusa.tapmiles`. Do not change it after the App Store Connect app record has been established.
 - The Android application ID used by Google Play is `com.powerusa.tapmiles`.
-- Android release `1.0.0` uses `versionCode` 1. Increase `versionCode` for every new Google Play upload (2, 3, 4, and so on).
+- The current Android release uses `versionCode` 2. Increase `versionCode` for every new Google Play upload (3, 4, 5, and so on).
+- Android displays a prominent in-app disclosure before requesting background location access. Keep this disclosure in place and show it before the Android permission prompt.
 - Production Android bundles must be signed with the private upload key stored securely outside this repository. Back up that key and its credentials; never commit either one to GitHub.
 - Keep this note in mind when changing CI, native project generation, or store configuration.
 

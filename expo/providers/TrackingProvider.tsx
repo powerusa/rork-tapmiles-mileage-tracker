@@ -15,6 +15,19 @@ import {
 
 export type GpsStatus = 'off' | 'searching' | 'active' | 'poor';
 
+const showBackgroundLocationDisclosure = (): Promise<boolean> =>
+  new Promise((resolve) => {
+    Alert.alert(
+      'Location access for trip tracking',
+      'TapMiles collects location data to calculate and record your mileage while a trip is active, even when the app is closed or not in use. Location tracking starts only when you tap “START DRIVE” and stops when you tap “STOP & SAVE.” A notification remains visible while a trip is being recorded.',
+      [
+        { text: 'Not now', style: 'cancel', onPress: () => resolve(false) },
+        { text: 'Continue', onPress: () => resolve(true) },
+      ],
+      { cancelable: false }
+    );
+  });
+
 export const [TrackingProvider, useTracking] = createContextHook(() => {
   const [isTracking, setIsTracking] = useState(false);
   const [elapsedTime, setElapsedTime] = useState(0);
@@ -205,6 +218,14 @@ export const [TrackingProvider, useTracking] = createContextHook(() => {
   const startTracking = useCallback(async () => {
     try {
       if (Platform.OS !== 'web') {
+        if (Platform.OS === 'android') {
+          const backgroundPermission = await Location.getBackgroundPermissionsAsync();
+          if (backgroundPermission.status !== 'granted') {
+            const acceptedDisclosure = await showBackgroundLocationDisclosure();
+            if (!acceptedDisclosure) return false;
+          }
+        }
+
         const { status } = await Location.requestForegroundPermissionsAsync();
         if (status !== 'granted') {
           console.log('TapMiles: Location permission denied');
