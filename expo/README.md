@@ -11,6 +11,7 @@ This is a native cross-platform mobile app created with [Rork](https://rork.com)
 
 - Xcode Cloud is intentionally deactivated because the generated `ios/` directory is not committed to this repository.
 - Build and submit the iOS app with Expo EAS Build, not Xcode Cloud.
+- The Expo config suppresses third-party CocoaPods warning noise while keeping TapMiles source warnings visible. It also disables Xcode user-script sandboxing for the generated React Native resource scripts, which must write their generated resource lists during builds.
 - Before the first iOS build or App Store submission, change the iOS bundle identifier to `com.powerusa.tapmiles`. Do not change it after the App Store Connect app record has been established.
 - The Android application ID used by Google Play is `com.powerusa.tapmiles`.
 - The current Android release uses `versionCode` 2. Increase `versionCode` for every new Google Play upload (3, 4, 5, and so on).
