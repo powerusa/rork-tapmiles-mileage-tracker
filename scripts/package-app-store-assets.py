@@ -26,3 +26,22 @@ shutil.copy2(source/'metadata/APP-STORE-COPY.md',args.destination/'TapMiles-App-
 shutil.copy2(source/'UPLOAD-GUIDE-PL.md',args.destination/'TapMiles-App-Store-Upload-Guide.md')
 print(f'{archive}: {archive.stat().st_size:,} bytes')
 print(f'{len(list(package.rglob("*.png")))} PNG files; original captures and SVG sources remain in Git only.')
+
+# Separate upload packs avoid mixing identical basenames from different sizes.
+for source_folder, upload_name, dimensions in [
+    ('iphone-medium-1206x2622', 'iPhone-MEDIUM', '1206x2622'),
+    ('iphone-large-1320x2868', 'iPhone-LARGE', '1320x2868'),
+    ('ipad-13-2064x2752', 'iPad-13', '2064x2752'),
+]:
+    upload_folder = args.destination / f'UPLOAD-{upload_name}-{dimensions}'
+    upload_folder.mkdir(parents=True, exist_ok=True)
+    upload_zip = args.destination / f'TapMiles-UPLOAD-{upload_name}-{dimensions}.zip'
+    with zipfile.ZipFile(upload_zip, 'w', zipfile.ZIP_DEFLATED) as archive:
+        for original in sorted((source / source_folder).glob('*.png')):
+            final_name = f'{original.stem}-{dimensions}.png'
+            final_file = upload_folder / final_name
+            shutil.copy2(original, final_file)
+            archive.write(final_file, final_name)
+        assert archive.testzip() is None
+    print(f'Single-size upload pack: {upload_zip.name}')
+shutil.copy2(source / 'extras/TapMiles-promotional-header-2400x1200.png', args.destination / 'TapMiles-HEADER-2400x1200.png')

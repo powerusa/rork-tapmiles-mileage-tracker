@@ -2,6 +2,16 @@
 
 Gotowe materiały w języku **English (U.S.)**. Screenshoty pokazują prawdziwe ekrany TapMiles 3.0 z fikcyjnymi danymi demonstracyjnymi. Nie zostały w nich dorysowane funkcje aplikacji. Nagłówki i oprawa graficzna znajdują się poza ekranem aplikacji.
 
+## Uwaga przy błędzie „File dimensions are invalid”
+
+Dla widocznej zakładki **iPhone with Dynamic Island (medium display)** wybierz wyłącznie PNG **1206 × 2622**. Pliki **1320 × 2868** należą do osobnej grupy large i zostaną odrzucone w medium.
+
+Dodatkowa paczka `TapMiles-UPLOAD-iPhone-MEDIUM-1206x2622.zip` zawiera tylko sześć właściwych obrazów. Rozpakuj ją i zaznacz wszystkie sześć PNG. Każdy ma w nazwie `1206x2622`, a nagłówek jest już częścią obrazu. Nie wgrywaj ZIP-a ani obrazów z katalogów `raw` lub `extras` jako screenshotów.
+
+Wyblakłe miniatury opisane w panelu jako **Using Existing Assets** to istniejące materiały; po odrzuconym uploadzie nie pokazują nowych screenshotów z nagłówkami.
+
+Osobny header promocyjny jest również dostępny bezpośrednio jako `TapMiles-HEADER-2400x1200.png`; nie należy wgrywać go do pola screenshotów iPhone’a.
+
 ## Co wgrać w App Store Connect
 
 Otwórz istniejącą aplikację → wersja iOS **3.0.0** → lokalizacja **English (U.S.)** → App Previews and Screenshots / Media Manager. W każdej grupie zachowaj kolejność plików `01`–`06`.
