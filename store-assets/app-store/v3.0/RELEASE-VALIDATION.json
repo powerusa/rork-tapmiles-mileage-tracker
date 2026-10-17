@@ -1,0 +1,20 @@
+{
+  "version": "3.0.0",
+  "build": "4",
+  "bundleIdentifier": "app.rork.tapmiles-mileage-tracker",
+  "deviceArchive": true,
+  "embeddedJavaScript": true,
+  "signedVerificationRequested": true,
+  "errors": [],
+  "warnings": [
+    "hermes.framework: vendor framework dSYM not included; framework crash symbols may be unavailable."
+  ],
+  "passed": true,
+  "checks": {
+    "typescript": "passed",
+    "eslint": "passed",
+    "regressionTests": 22,
+    "releaseArchive": "succeeded",
+    "organizer": "TapMilesMileageTracker 3.0.0 (4), arm64"
+  }
+}

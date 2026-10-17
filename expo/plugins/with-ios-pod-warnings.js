@@ -54,6 +54,24 @@ module.exports = function withIosPodWarnings(config) {
         "        build_config.build_settings['OTHER_CPLUSPLUSFLAGS'] = '$(inherited) -DFMT_USE_CONSTEVAL=0'\n        build_config.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'c++17' if target.name == 'fmt'"
       );
     }
+    const integrationMarker = '# TapMiles: clean metadata after CocoaPods copies resources and frameworks';
+    if (!podfileConfig.modResults.contents.includes(integrationMarker)) {
+      podfileConfig.modResults.contents += `
+
+${integrationMarker}
+post_integrate do |installer|
+  installer.aggregate_targets.map(&:user_project).uniq.each do |project|
+    project.native_targets.each do |target|
+      cleanup = target.shell_script_build_phases.find { |phase| phase.name == '[TapMiles] Clean signing metadata' }
+      next unless cleanup
+      target.build_phases.delete(cleanup)
+      target.build_phases << cleanup
+    end
+    project.save
+  end
+end
+`;
+    }
     return podfileConfig;
   });
 
@@ -62,6 +80,10 @@ module.exports = function withIosPodWarnings(config) {
     const configurations = project.pbxXCBuildConfigurationSection();
     Object.values(configurations).forEach((configuration) => {
       if (configuration?.buildSettings) {
+        if (configuration.buildSettings.PRODUCT_BUNDLE_IDENTIFIER) {
+          configuration.buildSettings.MARKETING_VERSION = projectConfig.version;
+          configuration.buildSettings.CURRENT_PROJECT_VERSION = projectConfig.ios.buildNumber;
+        }
         configuration.buildSettings.ENABLE_USER_SCRIPT_SANDBOXING = 'NO';
         configuration.buildSettings.EXTRACT_APP_INTENTS_METADATA = 'NO';
         configuration.buildSettings.OTHER_LDFLAGS = '"$(inherited) -Wl,-no_warn_duplicate_libraries"';
@@ -88,6 +110,26 @@ module.exports = function withIosPodWarnings(config) {
           'fi',
         ].join('\\n'),
       });
+    }
+    // Finder/iCloud metadata on generated resource bundles makes codesign fail.
+    // Limit cleanup to the built app and the two attributes forbidden by Apple QA1940.
+    const cleanupName = '[TapMiles] Clean signing metadata';
+    const hasCleanup = Object.values(shellPhases).some(
+      (phase) => typeof phase === 'object' && phase?.name?.includes(cleanupName)
+    );
+    if (!hasCleanup) {
+      const cleanup = project.addBuildPhase([], 'PBXShellScriptBuildPhase', cleanupName, project.getFirstTarget().uuid, {
+        shellPath: '/bin/sh',
+        shellScript: [
+          'case "$WRAPPER_NAME" in *.app) ;; *) exit 0 ;; esac',
+          'app_bundle="$TARGET_BUILD_DIR/$WRAPPER_NAME"',
+          'if [ -d "$app_bundle" ]; then',
+          '  /usr/bin/xattr -dr com.apple.FinderInfo "$app_bundle" 2>/dev/null || true',
+          '  /usr/bin/xattr -dr com.apple.ResourceFork "$app_bundle" 2>/dev/null || true',
+          'fi',
+        ].join('\\n'),
+      });
+      cleanup.buildPhase.alwaysOutOfDate = 1;
     }
     return projectConfig;
   });

@@ -13,7 +13,7 @@ This is a native cross-platform mobile app created with [Rork](https://rork.com)
 - Run `npm run typecheck`, `npm run lint`, and `npm test` before building.
 - Generate iOS with `npx expo prebuild --platform ios`, then open `ios/TapMilesMileageTracker.xcworkspace` in Xcode. Run Metro with `npx expo start --localhost` for a Debug build.
 - `plugins/with-ios-scenes.js` adds the scene lifecycle needed by iOS 27. Keep this plugin enabled when regenerating native projects.
-- Release version: 3.0.0; iOS build 3; Android versionCode 4. Preserve the established iOS bundle identifier for App Store updates.
+- Release version: 3.0.0; iOS build 4; Android versionCode 4. Preserve the established iOS bundle identifier for App Store updates.
 - Tracking and local data writes use serialized transactions. Stopped, unsaved recordings survive app restarts. A loading/storage error blocks edits rather than overwriting existing data.
 - Trip details support changing purpose, project, vehicle, and notes. The edit setting and 24-hour lock are enforced in the data layer.
 - Existing saved data is validated and missing settings receive defaults. Invalid stored data is preserved and reported instead of silently reset.
@@ -21,10 +21,18 @@ This is a native cross-platform mobile app created with [Rork](https://rork.com)
 
 Dependency audit: compatible updates removed the two critical findings from the initial audit. The current Expo SDK 54 / React Native 0.81 toolchain still has upstream advisories; clearing all findings requires a separately tested framework migration. No claim of an entirely vulnerability-free application is made.
 
+## Local Xcode Archive
+
+Open the repository’s `Open TapMiles in Xcode.command` launcher. The Xcode title must end in `.xcworkspace`. Select the TapMilesMileageTracker scheme and Any iOS Device, then Product → Archive. The Release bundle embeds JavaScript and does not require Metro.
+
+From the repository root, `node scripts/archive-ios.cjs` runs the same Release archive with the current version/build from app.json and existing Xcode signing configuration. `--unsigned` validates compilation only and cannot produce an App Store upload. Signed archives are written under `~/Library/Developer/Xcode/Archives`, outside iCloud-synced Documents. Unsigned checks use `work/`. Do not submit a simulator build.
+
+If a standalone-project attempt showed EXConstants.modulemap missing or many Clang errors, close that project and open the workspace; do not remove Pods or suppress compiler errors.
+
 ## Build and publishing note
 
 - Xcode Cloud is intentionally deactivated because the generated `ios/` directory is not committed to this repository.
-- Build and submit the iOS app with Expo EAS Build, not Xcode Cloud.
+- Archive locally from `ios/TapMilesMileageTracker.xcworkspace` or use Expo EAS Build after configuring EAS. Never archive the standalone `.xcodeproj`: it excludes Pods and produces missing-module errors.
 - The Expo config suppresses third-party CocoaPods warning noise while keeping TapMiles source warnings visible. It also disables Xcode user-script sandboxing for the generated React Native resource scripts, which must write their generated resource lists during builds.
 - The existing iOS bundle identifier is `app.rork.tapmiles-mileage-tracker`. Preserve it for updates to the established App Store Connect app.
 - The Android application ID used by Google Play is `com.powerusa.tapmiles`.

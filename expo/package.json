@@ -10,7 +10,9 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "typecheck": "tsc --noEmit",
-    "test": "node --test tests/*.cjs"
+    "test": "node --test tests/*.cjs",
+    "archive:ios": "node ../scripts/archive-ios.cjs",
+    "verify:ios-archive": "python3 ../scripts/verify-ios-archive.py"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
