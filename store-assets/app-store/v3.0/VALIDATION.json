@@ -1,0 +1,173 @@
+{
+  "version": "3.0.0",
+  "locale": "en-US",
+  "screenshots": [
+    {
+      "file": "iphone-medium-1206x2622/01-track.png",
+      "width": 1206,
+      "height": 2622,
+      "alpha": false,
+      "colorSpace": "srgb"
+    },
+    {
+      "file": "iphone-medium-1206x2622/02-live-tracking.png",
+      "width": 1206,
+      "height": 2622,
+      "alpha": false,
+      "colorSpace": "srgb"
+    },
+    {
+      "file": "iphone-medium-1206x2622/03-reports.png",
+      "width": 1206,
+      "height": 2622,
+      "alpha": false,
+      "colorSpace": "srgb"
+    },
+    {
+      "file": "iphone-medium-1206x2622/04-trips.png",
+      "width": 1206,
+      "height": 2622,
+      "alpha": false,
+      "colorSpace": "srgb"
+    },
+    {
+      "file": "iphone-medium-1206x2622/05-details.png",
+      "width": 1206,
+      "height": 2622,
+      "alpha": false,
+      "colorSpace": "srgb"
+    },
+    {
+      "file": "iphone-medium-1206x2622/06-settings.png",
+      "width": 1206,
+      "height": 2622,
+      "alpha": false,
+      "colorSpace": "srgb"
+    },
+    {
+      "file": "iphone-large-1320x2868/01-track.png",
+      "width": 1320,
+      "height": 2868,
+      "alpha": false,
+      "colorSpace": "srgb"
+    },
+    {
+      "file": "iphone-large-1320x2868/02-live-tracking.png",
+      "width": 1320,
+      "height": 2868,
+      "alpha": false,
+      "colorSpace": "srgb"
+    },
+    {
+      "file": "iphone-large-1320x2868/03-reports.png",
+      "width": 1320,
+      "height": 2868,
+      "alpha": false,
+      "colorSpace": "srgb"
+    },
+    {
+      "file": "iphone-large-1320x2868/04-trips.png",
+      "width": 1320,
+      "height": 2868,
+      "alpha": false,
+      "colorSpace": "srgb"
+    },
+    {
+      "file": "iphone-large-1320x2868/05-details.png",
+      "width": 1320,
+      "height": 2868,
+      "alpha": false,
+      "colorSpace": "srgb"
+    },
+    {
+      "file": "iphone-large-1320x2868/06-settings.png",
+      "width": 1320,
+      "height": 2868,
+      "alpha": false,
+      "colorSpace": "srgb"
+    },
+    {
+      "file": "ipad-13-2064x2752/01-track.png",
+      "width": 2064,
+      "height": 2752,
+      "alpha": false,
+      "colorSpace": "srgb"
+    },
+    {
+      "file": "ipad-13-2064x2752/02-live-tracking.png",
+      "width": 2064,
+      "height": 2752,
+      "alpha": false,
+      "colorSpace": "srgb"
+    },
+    {
+      "file": "ipad-13-2064x2752/03-reports.png",
+      "width": 2064,
+      "height": 2752,
+      "alpha": false,
+      "colorSpace": "srgb"
+    },
+    {
+      "file": "ipad-13-2064x2752/04-trips.png",
+      "width": 2064,
+      "height": 2752,
+      "alpha": false,
+      "colorSpace": "srgb"
+    },
+    {
+      "file": "ipad-13-2064x2752/05-details.png",
+      "width": 2064,
+      "height": 2752,
+      "alpha": false,
+      "colorSpace": "srgb"
+    },
+    {
+      "file": "ipad-13-2064x2752/06-settings.png",
+      "width": 2064,
+      "height": 2752,
+      "alpha": false,
+      "colorSpace": "srgb"
+    }
+  ],
+  "metadata": {
+    "name": {
+      "length": 25,
+      "limit": 30
+    },
+    "subtitle": {
+      "length": 28,
+      "limit": 30
+    },
+    "keywords": {
+      "length": 95,
+      "limit": 100
+    },
+    "promotional_text": {
+      "length": 139,
+      "limit": 170
+    },
+    "description": {
+      "length": 1552,
+      "limit": 4000
+    },
+    "whats_new": {
+      "length": 380,
+      "limit": 4000
+    },
+    "review_notes": {
+      "length": 428,
+      "limit": 4000
+    }
+  },
+  "status": "passed",
+  "captureSizes": {
+    "iphone": {
+      "width": 1206,
+      "height": 2622
+    },
+    "ipad": {
+      "width": 2064,
+      "height": 2752
+    }
+  }
+}

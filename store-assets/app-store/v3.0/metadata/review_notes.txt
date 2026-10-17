@@ -1,0 +1,5 @@
+No login or demo account is required.
+
+To record: open Track, tap START DRIVE, allow location access, then tap STOP & SAVE. Choose a purpose, project or vehicle, add notes if needed, and save. Reports offers PDF and CSV export. The app uses background location only for an active recording.
+
+Store screenshots contain fictional demonstration trips. They show the actual application interface with descriptive marketing headings.

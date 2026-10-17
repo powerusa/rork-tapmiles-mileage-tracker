@@ -1,0 +1,9 @@
+Version 3.0 makes your mileage log more dependable.
+
+• Improved compatibility with iOS 27.
+• More reliable local saves and GPS processing.
+• Recovery of stopped trips that have not yet been saved.
+• Edit trip purpose, project, vehicle and notes.
+• Trip locks and edit preferences are now enforced.
+• Your selected vehicle is remembered.
+• Improved PDF/CSV exports and date labels.

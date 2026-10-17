@@ -1,0 +1,32 @@
+Every mile deserves a clear record.
+
+TapMiles helps you track drives and keep a practical mileage log. Tap START DRIVE when you set off, follow your distance and time, then stop and save when you arrive.
+
+TRACK YOUR DRIVE
+• See distance, elapsed time, speed and GPS status while recording.
+• Record location in the background when the required permissions are enabled.
+• Recover a stopped, unsaved recording after reopening the app.
+
+KEEP TRIPS ORGANIZED
+• Classify drives as business, personal, medical or charity.
+• Assign a vehicle and project to each trip.
+• Add notes and review start time, duration and distance.
+• Edit trip details, with optional locking after 24 hours.
+
+TURN MILEAGE INTO USEFUL REPORTS
+• Review totals for 7, 30 or 90 days, or all time.
+• See distance by trip purpose.
+• Export mileage reports as PDF or CSV.
+• Share an individual trip by PDF, email, SMS or the system share sheet.
+
+SET IT UP YOUR WAY
+• Choose miles or kilometers.
+• Choose distance rounding to 0.1 or 0.01.
+• Maintain your own vehicles and projects.
+• Use TapMiles on iPhone and iPad.
+
+No account is required. Trip records are stored on your device.
+
+Location access is required to record a drive. Background location access is needed to continue tracking while the app is in the background. GPS accuracy depends on device reception and conditions. Continued background location use may reduce battery life.
+
+TapMiles is a mileage logging tool, not tax, legal or medical advice. Review your records before relying on them for reimbursement or other purposes.
