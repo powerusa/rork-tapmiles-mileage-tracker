@@ -1,0 +1,2 @@
+# Verified with the RN 0.81.5 Hermes source build on macOS.
+cmake==3.31.10

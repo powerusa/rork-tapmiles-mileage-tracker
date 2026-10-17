@@ -36,5 +36,15 @@ args.push('archive');
 const result = spawnSync('xcodebuild', args, { cwd: path.join(expo, 'ios'), stdio: 'inherit',
   env: { ...process.env, NODE_BINARY: process.execPath, PATH: `${path.dirname(process.execPath)}:${process.env.PATH || ''}` } });
 if (result.error) console.error(result.error.message);
-if (result.status === 0) console.log(`Archive: ${destination}`);
+if (result.status === 0) {
+  // File-provider metadata can reappear while Xcode copies the signed app.
+  // Remove only Apple's forbidden resource metadata from this generated archive.
+  const applications = path.join(destination, 'Products/Applications');
+  if (fs.existsSync(applications)) {
+    for (const attribute of ['com.apple.FinderInfo', 'com.apple.ResourceFork']) {
+      spawnSync('/usr/bin/xattr', ['-rd', attribute, applications], { stdio: 'ignore' });
+    }
+  }
+  console.log(`Archive: ${destination}`);
+}
 process.exit(result.status ?? 1);

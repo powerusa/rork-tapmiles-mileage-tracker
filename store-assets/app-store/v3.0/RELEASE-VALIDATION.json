@@ -1,20 +1,30 @@
 {
   "version": "3.0.0",
-  "build": "4",
+  "build": "5",
   "bundleIdentifier": "app.rork.tapmiles-mileage-tracker",
   "deviceArchive": true,
   "embeddedJavaScript": true,
   "signedVerificationRequested": true,
+  "frameworkSymbols": {
+    "hermes.framework": {
+      "binaryUUIDs": [
+        "61555D1C-B899-3A44-AB83-8F70931DB3CB"
+      ],
+      "dSYMUUIDs": [
+        "61555D1C-B899-3A44-AB83-8F70931DB3CB"
+      ],
+      "realDWARF": true
+    }
+  },
   "errors": [],
-  "warnings": [
-    "hermes.framework: vendor framework dSYM not included; framework crash symbols may be unavailable."
-  ],
+  "warnings": [],
   "passed": true,
   "checks": {
     "typescript": "passed",
     "eslint": "passed",
-    "regressionTests": 22,
+    "regressionTests": 23,
     "releaseArchive": "succeeded",
-    "organizer": "TapMilesMileageTracker 3.0.0 (4), arm64"
+    "organizer": "TapMilesMileageTracker 3.0.0 (5), arm64",
+    "runtimeSmokeTestBuild5": "not performed"
   }
 }

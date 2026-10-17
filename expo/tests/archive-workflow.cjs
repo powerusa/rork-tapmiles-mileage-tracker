@@ -145,3 +145,26 @@ puts 'OK'
   assert.equal(result.status, 0, result.stderr);
   assert.match(result.stdout, /OK/);
 });
+
+test('Hermes source selection replaces old settings and the existing dSYM phase fails on missing DWARF input', async (t) => {
+  const f = fixture(t);
+  const plugin = require('../plugins/with-ios-pod-warnings');
+  const config = plugin({ name: 'TapMiles', slug: 'tapmiles', version: '3.0.0', ios: { buildNumber: '5' } });
+  const podfile = await config.mods.ios.podfile({ ...config, modResults: { contents: "ENV['RCT_BUILD_HERMES_FROM_SOURCE'] = 'false'\nprepare_react_native_project!\n", language: 'ruby' }, modRequest: { platform: 'ios', modName: 'podfile', projectRoot: f.root } });
+  assert.equal((podfile.modResults.contents.match(/ENV\['RCT_BUILD_HERMES_FROM_SOURCE'\]/g) || []).length, 1);
+  assert.match(podfile.modResults.contents, /^ENV\['RCT_BUILD_HERMES_FROM_SOURCE'\] = 'true'/);
+  const initialPodfile = "prepare_react_native_project!\n  post_install do |installer|\n  end\n";
+  const transform = (contents) => config.mods.ios.podfile({ ...config, modResults: { contents, language: 'ruby' }, modRequest: { platform: 'ios', modName: 'podfile', projectRoot: f.root } });
+  const transformed = await transform(initialPodfile);
+  const repeated = await transform(transformed.modResults.contents);
+  assert.equal(repeated.modResults.contents, transformed.modResults.contents);
+  assert.match(transformed.modResults.contents, /-DCMAKE_BUILD_TYPE=Release/);
+  const syntax = spawnSync('ruby', ['-c'], { input: transformed.modResults.contents, encoding: 'utf8' });
+  assert.equal(syntax.status, 0, syntax.stderr);
+  const phase = { name: '[TapMiles] Generate Hermes dSYM', inputPaths: ['old embedded binary'] };
+  const project = { pbxXCBuildConfigurationSection: () => ({}), hash: { project: { objects: { PBXShellScriptBuildPhase: { hermes: phase, cleanup: { name: '[TapMiles] Clean signing metadata' } } } } } };
+  await config.mods.ios.xcodeproj({ ...config, modResults: project, modRequest: { platform: 'ios', modName: 'xcodeproj', projectRoot: f.root } });
+  assert.match(phase.inputPaths[0], /PODS_ROOT.*destroot.*hermes\.framework\/hermes/);
+  const result = spawnSync('/bin/sh', ['-c', JSON.parse(phase.shellScript)], { env: { ...process.env, CONFIGURATION: 'Release', SCRIPT_INPUT_FILE_0: path.join(f.root, 'missing-hermes') }, encoding: 'utf8' });
+  assert.notEqual(result.status, 0, 'Missing symbols must fail the Release build, not silently skip generation.');
+});

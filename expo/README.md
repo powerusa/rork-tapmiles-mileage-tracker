@@ -11,9 +11,10 @@ This is a native cross-platform mobile app created with [Rork](https://rork.com)
 
 - Install dependencies with `npm ci`, `bun install --frozen-lockfile`, or `pnpm install --frozen-lockfile`. Keep their lockfiles synchronized when changing dependencies.
 - Run `npm run typecheck`, `npm run lint`, and `npm test` before building.
+- Install the pinned CMake tool from the root README before installing iOS Pods. Hermes builds from source with matching DWARF symbols.
 - Generate iOS with `npx expo prebuild --platform ios`, then open `ios/TapMilesMileageTracker.xcworkspace` in Xcode. Run Metro with `npx expo start --localhost` for a Debug build.
 - `plugins/with-ios-scenes.js` adds the scene lifecycle needed by iOS 27. Keep this plugin enabled when regenerating native projects.
-- Release version: 3.0.0; iOS build 4; Android versionCode 4. Preserve the established iOS bundle identifier for App Store updates.
+- Release version: 3.0.0; iOS build 5; Android versionCode 4. Preserve the established iOS bundle identifier for App Store updates.
 - Tracking and local data writes use serialized transactions. Stopped, unsaved recordings survive app restarts. A loading/storage error blocks edits rather than overwriting existing data.
 - Trip details support changing purpose, project, vehicle, and notes. The edit setting and 24-hour lock are enforced in the data layer.
 - Existing saved data is validated and missing settings receive defaults. Invalid stored data is preserved and reported instead of silently reset.
