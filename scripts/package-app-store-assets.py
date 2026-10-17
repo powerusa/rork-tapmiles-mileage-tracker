@@ -12,9 +12,9 @@ root = Path(__file__).resolve().parents[1]
 source = root / 'store-assets/app-store/v3.0'
 package = args.destination / 'TapMiles-App-Store-3.0'
 package.mkdir(parents=True, exist_ok=True)
-for name in ['iphone-medium-1206x2622','iphone-large-1320x2868','ipad-13-2064x2752','metadata','extras','creative-assets']:
+for name in ['iphone-medium-1206x2622','iphone-large-1320x2868','ipad-13-2064x2752','metadata','extras','creative-assets','iphone-duo-outer-1398x2034','iphone-duo-inner-2007x2853']:
     shutil.copytree(source/name, package/name, dirs_exist_ok=True)
-for name in ['App-Icon-1024.png','UPLOAD-GUIDE-PL.md','VALIDATION.json']:
+for name in ['App-Icon-1024.png','UPLOAD-GUIDE-PL.md','VALIDATION.json','DUO-UPLOAD-GUIDE-PL.md','DUO-VALIDATION.json']:
     shutil.copy2(source/name, package/name)
 archive = args.destination / 'TapMiles-App-Store-3.0.zip'
 with zipfile.ZipFile(archive,'w',zipfile.ZIP_DEFLATED) as z:

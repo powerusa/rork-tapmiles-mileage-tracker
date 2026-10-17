@@ -84,3 +84,12 @@ Przygotowanie materiałów nie jest publikacją ani przesłaniem aplikacji do re
 - `TapMiles-App-Store-Preview.png` jest tylko podglądem; nie wgrywaj go do tych pól.
 
 Specyfikacja: https://developer.apple.com/help/app-store-connect/reference/app-information/creative-assets-specifications
+
+## iPhone Duo
+
+Osobne paczki zawierają po sześć screenshotów z nagłówkami:
+
+- Outer: `iphone-duo-outer-1398x2034` — 1398 × 2034 PNG.
+- Inner: `iphone-duo-inner-2007x2853` — 2007 × 2853 PNG.
+
+Wgrywaj do odpowiedniej grupy w iPhone Duo. Nie mieszaj rozmiarów. Szczegóły: `DUO-UPLOAD-GUIDE-PL.md`.

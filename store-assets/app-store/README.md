@@ -12,3 +12,5 @@ Rebuild copy with `python3 scripts/write-app-store-metadata.py`.
 Rebuild PNGs with `node scripts/render-app-store-assets.cjs` (requires `sharp` and Avenir Next; set `NODE_PATH` if using the bundled Codex runtime).
 
 All demo data is fictional. No fabricated reviews, rankings, or unsupported app features are included.
+
+Duo assets: six outer-screen PNGs at 1398 × 2034 and six inner-screen PNGs at 2007 × 2853, captured from the dedicated iOS 27.1 Duo simulator. The root layout now respects asymmetric horizontal safe areas. See `v3.0/DUO-UPLOAD-GUIDE-PL.md` and `DUO-VALIDATION.json`. Rebuild with `scripts/render-duo-app-store-assets.cjs`, package with `scripts/package-duo-app-store-assets.py`.

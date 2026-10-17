@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect } from "react";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { TripProvider, useTrips } from "@/providers/TripProvider";
 import { TrackingProvider, useTracking } from "@/providers/TrackingProvider";
@@ -63,15 +64,17 @@ export default function RootLayout() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <GestureHandlerRootView style={{ flex: 1 }}>
-        <I18nProvider>
-          <TripProvider>
-            <TrackingProvider>
-              <RootLayoutNav />
-            </TrackingProvider>
-          </TripProvider>
-        </I18nProvider>
-      </GestureHandlerRootView>
+      <SafeAreaView edges={["left", "right"]} style={{ flex: 1, backgroundColor: Colors.background }}>
+        <GestureHandlerRootView style={{ flex: 1 }}>
+          <I18nProvider>
+            <TripProvider>
+              <TrackingProvider>
+                <RootLayoutNav />
+              </TrackingProvider>
+            </TripProvider>
+          </I18nProvider>
+        </GestureHandlerRootView>
+      </SafeAreaView>
     </QueryClientProvider>
   );
 }
