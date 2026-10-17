@@ -77,7 +77,7 @@ Suggested primary: Business. Suggested secondary: Travel.
 
 ## Search-result strategy
 
-Upload screenshots 01, 02 and 03 first: start tracking, live trip data, and mileage reports. Apple can use the first one to three screenshots in search results when no app preview is present. There is no separate organic search-result image to upload. This keyword set describes supported features; it is not a claim about keyword popularity or search ranking.
+Upload screenshots 01, 02 and 03 first: start tracking, live trip data, and mileage reports. Apple can use the first one to three screenshots in search results when no app preview is present. The separate Header and Search Results tab accepts creative assets: use the dedicated 3840 × 1646 header and 3840 × 2560 search-results PNGs in creative-assets. This keyword set describes supported features; it is not a claim about keyword popularity or search ranking.
 
 ## Fields to keep from the existing App Store record
 

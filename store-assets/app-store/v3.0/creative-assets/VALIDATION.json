@@ -1,0 +1,16 @@
+[
+  {
+    "name": "TapMiles-APPLE-HEADER-3840x1646.png",
+    "width": 3840,
+    "height": 1646,
+    "channels": 3,
+    "hasAlpha": false
+  },
+  {
+    "name": "TapMiles-APPLE-SEARCH-RESULTS-3840x2560.png",
+    "width": 3840,
+    "height": 2560,
+    "channels": 3,
+    "hasAlpha": false
+  }
+]

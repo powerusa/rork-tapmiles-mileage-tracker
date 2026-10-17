@@ -12,7 +12,7 @@ root = Path(__file__).resolve().parents[1]
 source = root / 'store-assets/app-store/v3.0'
 package = args.destination / 'TapMiles-App-Store-3.0'
 package.mkdir(parents=True, exist_ok=True)
-for name in ['iphone-medium-1206x2622','iphone-large-1320x2868','ipad-13-2064x2752','metadata','extras']:
+for name in ['iphone-medium-1206x2622','iphone-large-1320x2868','ipad-13-2064x2752','metadata','extras','creative-assets']:
     shutil.copytree(source/name, package/name, dirs_exist_ok=True)
 for name in ['App-Icon-1024.png','UPLOAD-GUIDE-PL.md','VALIDATION.json']:
     shutil.copy2(source/name, package/name)
@@ -44,4 +44,5 @@ for source_folder, upload_name, dimensions in [
             archive.write(final_file, final_name)
         assert archive.testzip() is None
     print(f'Single-size upload pack: {upload_zip.name}')
-shutil.copy2(source / 'extras/TapMiles-promotional-header-2400x1200.png', args.destination / 'TapMiles-HEADER-2400x1200.png')
+for asset in (source / 'creative-assets').glob('*.png'):
+    shutil.copy2(asset, args.destination / asset.name)

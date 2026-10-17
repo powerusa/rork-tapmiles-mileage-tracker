@@ -97,8 +97,10 @@ async function extras(){
   for(let i=0;i<6;i++)contact+=`<image href="${data(path.join(base,'iphone-medium-1206x2622',slides[i].key+'.png'))}" x="${60+(i%3)*690}" y="${125+Math.floor(i/3)*800}" width="350" height="761"/>`+text(435+(i%3)*690,190+Math.floor(i/3)*800,`${i+1}. ${slides[i].tag.split(' ')[0]}`,22,'#102B23',700);
   await save('extras/Contact-sheet-iPhone.png',svg(2100,1780,contact));
 }
-(async()=>{
+if (require.main === module) (async()=>{
   fs.mkdirSync(path.join(base,'design'),{recursive:true});
   for(let i=0;i<slides.length;i++){await renderSlide(slides[i],i,'iphone');if(fs.existsSync(path.join(base,'raw/ipad',slides[i].key+'.png')))await renderSlide(slides[i],i,'ipad');}
   await extras();
 })().catch(error=>{console.error(error);process.exitCode=1;});
+
+module.exports={base,svg,text,route,device,save,themes,slides};

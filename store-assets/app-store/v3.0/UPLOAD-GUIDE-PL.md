@@ -10,7 +10,7 @@ Dodatkowa paczka `TapMiles-UPLOAD-iPhone-MEDIUM-1206x2622.zip` zawiera tylko sze
 
 Wyblakłe miniatury opisane w panelu jako **Using Existing Assets** to istniejące materiały; po odrzuconym uploadzie nie pokazują nowych screenshotów z nagłówkami.
 
-Osobny header promocyjny jest również dostępny bezpośrednio jako `TapMiles-HEADER-2400x1200.png`; nie należy wgrywać go do pola screenshotów iPhone’a.
+Do pola Header wybierz `TapMiles-APPLE-HEADER-3840x1646.png`. Poprzedni banner 2400 × 1200 i plik App-Store-Preview nie nadają się do tego pola.
 
 ## Co wgrać w App Store Connect
 
@@ -35,7 +35,7 @@ Jeżeli panel Apple posługuje się starszymi etykietami w calach, wybierz odpow
 5. **Small details. A clearer record.** — szczegóły, projekt, samochód i notatka.
 6. **Your setup. Your way.** — ustawienia, jednostki, projekty i pojazdy.
 
-Pierwsze trzy dobrano z myślą o wynikach wyszukiwania. Apple może wyświetlać pierwsze 1–3 screenshoty, gdy aplikacja nie ma app preview. Osobny screenshot wyników wyszukiwania nie jest wymaganym polem uploadu.
+Pierwsze trzy dobrano z myślą o wynikach wyszukiwania. Apple może wyświetlać pierwsze 1–3 screenshoty, gdy aplikacja nie ma app preview. Osobna zakładka Header and Search Results obsługuje też opcjonalne creative assets; nie należy mylić ich ze screenshotami.
 
 ## Teksty do przeklejenia
 
@@ -58,7 +58,7 @@ Zachowaj istniejący Support URL, Privacy Policy URL oraz dane właściciela apl
 
 ## Materiały dodatkowe — nie wgrywać jako screenshoty
 
-- `extras/TapMiles-promotional-header-2400x1200.png` — banner/header do promocji, strony lub social media. Zwykła strona produktu w App Store Connect nie ma osobnego wymaganego pola na taki banner.
+- `extras/TapMiles-promotional-header-2400x1200.png` — banner/header do promocji, strony lub social media. Ten rozmiar nie jest zgodny z polem Header w App Store Connect.
 - `extras/Search-results-screenshot-preview.png` — podgląd pierwszych trzech kadrów. Nie udaje rzeczywistej pozycji w wynikach wyszukiwania ani zatwierdzonej strony Apple.
 - `extras/Contact-sheet-iPhone.png` — podgląd całego zestawu.
 
@@ -75,3 +75,12 @@ Demonstracyjne trasy pochodzą z dedykowanych symulatorów „TapMiles App Store
 - Limity keywords i zasady wyszukiwania: https://developer.apple.com/app-store/search/
 
 Przygotowanie materiałów nie jest publikacją ani przesłaniem aplikacji do review. Wersja 3.0.0 nadal wymaga wybrania właściwego builda i uzupełnienia istniejących danych App Store Connect.
+
+## Header and Search Results — właściwe pliki
+
+- Header → `creative-assets/TapMiles-APPLE-HEADER-3840x1646.png` (3840 × 1646).
+- Search Results → `creative-assets/TapMiles-APPLE-SEARCH-RESULTS-3840x2560.png` (3840 × 2560).
+- Wgrywaj PNG, nie ZIP. Pliki są sRGB bez alpha.
+- `TapMiles-App-Store-Preview.png` jest tylko podglądem; nie wgrywaj go do tych pól.
+
+Specyfikacja: https://developer.apple.com/help/app-store-connect/reference/app-information/creative-assets-specifications
