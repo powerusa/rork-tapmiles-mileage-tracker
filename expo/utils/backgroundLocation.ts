@@ -1,101 +1,75 @@
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { RoutePoint } from '@/types/trip';
-import { haversineDistance } from '@/utils/location';
+import * as TaskManager from 'expo-task-manager';
+import { z } from 'zod';
+import type { RoutePoint } from '@/types/trip';
+import { draftSchema, routePointSchema } from '@/utils/validation';
+import { appendLocations, PersistedTrackingState } from '@/utils/tracking';
+import { storageTransaction } from '@/utils/storage';
+export type { PersistedTrackingState } from '@/utils/tracking';
 
 export const BACKGROUND_LOCATION_TASK = 'TAPMILES_BACKGROUND_LOCATION';
 export const TRACKING_STATE_KEY = '@tapmiles_tracking_state';
-
-export interface PersistedTrackingState {
-  isTracking: boolean;
-  startTime: number;
-  distance: number;
-  routePoints: RoutePoint[];
-  lastPoint: RoutePoint | null;
+const schema = z.object({
+  isTracking: z.boolean(),
+  startTime: z.number().finite().positive(),
+  distance: z.number().finite().nonnegative(),
+  routePoints: z.array(routePointSchema),
+  lastPoint: routePointSchema.nullable(),
+  pendingTrip: draftSchema.nullable().optional(),
+});
+async function readState(): Promise<PersistedTrackingState | null> {
+  const raw = await AsyncStorage.getItem(TRACKING_STATE_KEY);
+  return raw ? schema.parse(JSON.parse(raw)) : null;
 }
-
-export async function getPersistedState(): Promise<PersistedTrackingState | null> {
-  try {
-    const raw = await AsyncStorage.getItem(TRACKING_STATE_KEY);
-    if (!raw) return null;
-    return JSON.parse(raw) as PersistedTrackingState;
-  } catch (err) {
-    console.log('TapMiles: Failed to read persisted tracking state:', err);
-    return null;
-  }
+export function getPersistedState() {
+  return storageTransaction(TRACKING_STATE_KEY, readState);
 }
-
-export async function persistState(state: PersistedTrackingState): Promise<void> {
-  try {
-    await AsyncStorage.setItem(TRACKING_STATE_KEY, JSON.stringify(state));
-  } catch (err) {
-    console.log('TapMiles: Failed to persist tracking state:', err);
-  }
+export function changeTrackingState(
+  update: (state: PersistedTrackingState | null) => PersistedTrackingState | null,
+) {
+  return storageTransaction(TRACKING_STATE_KEY, async () => {
+    const state = update(await readState());
+    if (state) await AsyncStorage.setItem(TRACKING_STATE_KEY, JSON.stringify(schema.parse(state)));
+    else await AsyncStorage.removeItem(TRACKING_STATE_KEY);
+    return state;
+  });
 }
+export const persistState = (state: PersistedTrackingState) => changeTrackingState(() => state);
+export const clearPersistedState = () => changeTrackingState(() => null);
+export const recordLocations = (points: RoutePoint[]) =>
+  changeTrackingState((state) => (state ? appendLocations(state, points) : null));
 
-export async function clearPersistedState(): Promise<void> {
-  try {
-    await AsyncStorage.removeItem(TRACKING_STATE_KEY);
-  } catch (err) {
-    console.log('TapMiles: Failed to clear persisted tracking state:', err);
-  }
-}
-
-if (Platform.OS !== 'web') {
-  const TaskManager = require('expo-task-manager');
-  const Location = require('expo-location');
-
-  TaskManager.defineTask(BACKGROUND_LOCATION_TASK, async ({ data, error }: { data: unknown; error: { message: string } | null }) => {
+if (Platform.OS !== 'web' && !TaskManager.isTaskDefined(BACKGROUND_LOCATION_TASK)) {
+  TaskManager.defineTask(BACKGROUND_LOCATION_TASK, async ({ data, error }) => {
     if (error) {
-      console.log('TapMiles: Background location error:', error.message);
+      console.error('TapMiles: Background location error', error.message);
       return;
     }
-
-    const locationData = data as { locations?: { coords: { latitude: number; longitude: number; speed: number | null; accuracy: number | null }; timestamp: number }[] };
-    if (!locationData.locations || locationData.locations.length === 0) return;
-
-    console.log('TapMiles: Background received', locationData.locations.length, 'locations');
-
-    const state = await getPersistedState();
-    if (!state || !state.isTracking) return;
-
-    let { distance, routePoints, lastPoint } = state;
-
-    for (const loc of locationData.locations) {
-      const point: RoutePoint = {
-        latitude: loc.coords.latitude,
-        longitude: loc.coords.longitude,
-        timestamp: loc.timestamp,
-        speed: loc.coords.speed ?? 0,
-        accuracy: loc.coords.accuracy ?? 999,
-      };
-
-      if (point.accuracy > 50) continue;
-
-      if (lastPoint) {
-        const d = haversineDistance(
-          lastPoint.latitude,
-          lastPoint.longitude,
-          point.latitude,
-          point.longitude
-        );
-        if (d > 0.001 && d < 0.5) {
-          distance += d;
-        }
-      }
-
-      lastPoint = point;
-
-      if (routePoints.length < 5000) {
-        routePoints.push(point);
-      }
+    const payload = data as {
+      locations?: {
+        coords: {
+          latitude: number;
+          longitude: number;
+          speed: number | null;
+          accuracy: number | null;
+        };
+        timestamp: number;
+      }[];
+    } | null;
+    if (!payload?.locations?.length) return;
+    try {
+      await recordLocations(
+        payload.locations.map((location) => ({
+          latitude: location.coords.latitude,
+          longitude: location.coords.longitude,
+          timestamp: location.timestamp,
+          speed: location.coords.speed ?? 0,
+          accuracy: location.coords.accuracy ?? 999,
+        })),
+      );
+    } catch (err) {
+      console.error('TapMiles: Background recording failed', err);
     }
-
-    await persistState({
-      ...state,
-      distance,
-      routePoints,
-      lastPoint,
-    });
   });
 }

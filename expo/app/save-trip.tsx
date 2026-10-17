@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useRef } from 'react';
 import {
   View,
   Text,
@@ -37,6 +37,8 @@ export default function SaveTripScreen() {
     { key: 'charity', label: t.charity, Icon: HandHeart, color: Colors.purposes.charity },
   ], [t]);
 
+  const savingRef = useRef(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [purpose, setPurpose] = useState<TripPurpose>('business');
   const [selectedProject, setSelectedProject] = useState<string | null>(null);
   const [selectedVehicle, setSelectedVehicle] = useState<string | null>(selectedVehicleId);
@@ -46,14 +48,15 @@ export default function SaveTripScreen() {
   const [showAddProject, setShowAddProject] = useState(false);
   const [showAddVehicle, setShowAddVehicle] = useState(false);
 
-  const handleSave = useCallback(() => {
+  const handleSave = useCallback(async () => {
+    if (savingRef.current) return;
     if (!pendingTrip) {
       Alert.alert(t.error, t.errorNoTrip);
       return;
     }
 
     const trip: Trip = {
-      id: Date.now().toString(),
+      id: `trip-${pendingTrip.startTime}`,
       startTime: pendingTrip.startTime,
       endTime: pendingTrip.endTime,
       distance: pendingTrip.distance,
@@ -65,20 +68,30 @@ export default function SaveTripScreen() {
       routePoints: pendingTrip.routePoints,
     };
 
-    addTrip(trip);
-    clearPendingTrip();
-    router.back();
+    savingRef.current = true;
+    setIsSaving(true);
+    try {
+      await addTrip(trip);
+      await clearPendingTrip();
+      router.back();
+    } catch {
+      Alert.alert(t.error, 'The trip could not be saved. Please retry; your recording is preserved.');
+    } finally { savingRef.current = false; setIsSaving(false); }
   }, [pendingTrip, purpose, selectedProject, selectedVehicle, notes, addTrip, clearPendingTrip, router, t]);
 
   const handleDiscard = useCallback(() => {
+    if (savingRef.current) return;
     Alert.alert(t.discardTrip, t.discardTripMsg, [
       { text: t.cancel, style: 'cancel' },
       {
         text: t.discard,
         style: 'destructive',
-        onPress: () => {
-          clearPendingTrip();
-          router.back();
+        onPress: async () => {
+          savingRef.current = true;
+          setIsSaving(true);
+          try { await clearPendingTrip(); router.back(); }
+          catch { Alert.alert(t.error, 'Unable to discard. Please try again.'); }
+          finally { savingRef.current = false; setIsSaving(false); }
         },
       },
     ]);
@@ -331,6 +344,7 @@ export default function SaveTripScreen() {
             styles.saveButton,
             pressed && { opacity: 0.8 },
           ]}
+          disabled={isSaving}
           onPress={handleSave}
           testID="save-trip-button"
         >
@@ -339,6 +353,7 @@ export default function SaveTripScreen() {
 
         <Pressable
           style={styles.discardButton}
+          disabled={isSaving}
           onPress={handleDiscard}
         >
           <Text style={styles.discardButtonText}>{t.discard}</Text>

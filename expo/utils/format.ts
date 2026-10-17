@@ -48,10 +48,11 @@ export function formatTime(timestamp: number): string {
 export function formatDateShort(timestamp: number): string {
   const now = new Date();
   const date = new Date(timestamp);
-  const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
+  const day = (d: Date) => Date.UTC(d.getFullYear(), d.getMonth(), d.getDate());
+  const diffDays = Math.round((day(now) - day(date)) / 86400000);
 
   if (diffDays === 0) return 'Today';
   if (diffDays === 1) return 'Yesterday';
-  if (diffDays < 7) return date.toLocaleDateString('en-US', { weekday: 'long' });
+  if (diffDays > 1 && diffDays < 7) return date.toLocaleDateString('en-US', { weekday: 'long' });
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }

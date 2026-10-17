@@ -1,0 +1,4 @@
+overrides:
+  '@ai-sdk/react': 2.0.139
+  shell-quote: 1.12.0
+  tar: 7.5.22

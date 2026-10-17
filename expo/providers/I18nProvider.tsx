@@ -1,7 +1,9 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Platform } from 'react-native';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { Platform, Alert } from 'react-native';
+import * as Localization from 'expo-localization';
 import createContextHook from '@nkzw/create-context-hook';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { storageTransaction } from '@/utils/storage';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import {
   Translations,
@@ -19,16 +21,20 @@ function getDeviceLocale(): SupportedLocale {
       const lang = nav?.language ?? nav?.languages?.[0] ?? 'en';
       const code = lang.split('-')[0].toLowerCase();
       console.log('TapMiles i18n: Web detected language:', lang, '-> code:', code);
-      if (code in translationsMap) return code as SupportedLocale;
+      if (Object.hasOwn(translationsMap, code)) return code as SupportedLocale;
       return 'en';
     }
 
-    const Localization = require('expo-localization');
     const locales = Localization.getLocales?.();
     if (locales && locales.length > 0) {
       const code = locales[0].languageCode?.toLowerCase() ?? 'en';
-      console.log('TapMiles i18n: Device locale detected:', locales[0].languageTag, '-> code:', code);
-      if (code in translationsMap) return code as SupportedLocale;
+      console.log(
+        'TapMiles i18n: Device locale detected:',
+        locales[0].languageTag,
+        '-> code:',
+        code,
+      );
+      if (Object.hasOwn(translationsMap, code)) return code as SupportedLocale;
     }
   } catch (err) {
     console.log('TapMiles i18n: Error detecting locale:', err);
@@ -40,6 +46,7 @@ export const [I18nProvider, useI18n] = createContextHook(() => {
   const detectedLocale = useMemo(() => getDeviceLocale(), []);
   const [locale, setLocale] = useState<SupportedLocale>(detectedLocale);
 
+  const changedByUser = useRef(false);
   const storedLocaleQuery = useQuery({
     queryKey: ['locale'],
     queryFn: async () => {
@@ -50,23 +57,31 @@ export const [I18nProvider, useI18n] = createContextHook(() => {
   });
 
   useEffect(() => {
-    if (storedLocaleQuery.data && storedLocaleQuery.data in translationsMap) {
+    if (
+      !changedByUser.current &&
+      storedLocaleQuery.data &&
+      Object.hasOwn(translationsMap, storedLocaleQuery.data)
+    ) {
       setLocale(storedLocaleQuery.data);
     }
   }, [storedLocaleQuery.data]);
 
   const persistLocale = useMutation({
+    scope: { id: STORAGE_KEY },
+    onError: () =>
+      Alert.alert('Unable to save language', 'Please select your language again to retry.'),
     mutationFn: (loc: SupportedLocale) =>
-      AsyncStorage.setItem(STORAGE_KEY, loc),
+      storageTransaction(STORAGE_KEY, () => AsyncStorage.setItem(STORAGE_KEY, loc)),
   });
 
   const changeLocale = useCallback(
     (loc: SupportedLocale) => {
-      console.log('TapMiles i18n: Changing locale to:', loc);
+      if (!Object.hasOwn(translationsMap, loc)) return;
+      changedByUser.current = true;
       setLocale(loc);
       persistLocale.mutate(loc);
     },
-    [persistLocale]
+    [persistLocale],
   );
 
   const t: Translations = useMemo(() => translationsMap[locale], [locale]);
@@ -75,7 +90,7 @@ export const [I18nProvider, useI18n] = createContextHook(() => {
 
   const localeName = useMemo(
     () => SUPPORTED_LOCALES.find((l) => l.code === locale)?.name ?? 'English',
-    [locale]
+    [locale],
   );
 
   return {

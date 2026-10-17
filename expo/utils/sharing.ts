@@ -14,8 +14,11 @@ const cacheUri = (filename: string) => {
   return `${FileSystem.cacheDirectory}${filename}`;
 };
 
-export const escapeCsv = (value: string | number) =>
-  `"${String(value).replace(/"/g, '""')}"`;
+export const escapeCsv = (value: string | number) => {
+  const text = String(value);
+  const safe = typeof value === 'string' && /^[\s]*[=+@-]/.test(text) ? `'${text}` : text;
+  return `"${safe.replace(/"/g, '""')}"`;
+};
 
 export const escapeHtml = (value: string | number) =>
   String(value)
@@ -39,6 +42,10 @@ export async function shareCsvFile(filename: string, csv: string) {
 }
 
 export async function sharePdfFile(filename: string, html: string, dialogTitle: string) {
+  if (Platform.OS === 'web') {
+    await Print.printAsync({ html });
+    return;
+  }
   await ensureSharingAvailable();
   const result = await Print.printToFileAsync({ html });
   const uri = cacheUri(filename);

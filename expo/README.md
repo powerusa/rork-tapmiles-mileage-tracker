@@ -7,14 +7,28 @@ This is a native cross-platform mobile app created with [Rork](https://rork.com)
 **Platform**: Native iOS & Android app, exportable to web
 **Framework**: Expo Router + React Native
 
+## TapMiles 3.0.0 — local development
+
+- Install dependencies with `npm ci`, `bun install --frozen-lockfile`, or `pnpm install --frozen-lockfile`. Keep their lockfiles synchronized when changing dependencies.
+- Run `npm run typecheck`, `npm run lint`, and `npm test` before building.
+- Generate iOS with `npx expo prebuild --platform ios`, then open `ios/TapMilesMileageTracker.xcworkspace` in Xcode. Run Metro with `npx expo start --localhost` for a Debug build.
+- `plugins/with-ios-scenes.js` adds the scene lifecycle needed by iOS 27. Keep this plugin enabled when regenerating native projects.
+- Release version: 3.0.0; iOS build 3; Android versionCode 4. Preserve the established iOS bundle identifier for App Store updates.
+- Tracking and local data writes use serialized transactions. Stopped, unsaved recordings survive app restarts. A loading/storage error blocks edits rather than overwriting existing data.
+- Trip details support changing purpose, project, vehicle, and notes. The edit setting and 24-hour lock are enforced in the data layer.
+- Existing saved data is validated and missing settings receive defaults. Invalid stored data is preserved and reported instead of silently reset.
+- GPS deduplication, persistence failure recovery, calendar boundaries, export escaping, and draft recovery have regression coverage in `tests/regression.cjs`.
+
+Dependency audit: compatible updates removed the two critical findings from the initial audit. The current Expo SDK 54 / React Native 0.81 toolchain still has upstream advisories; clearing all findings requires a separately tested framework migration. No claim of an entirely vulnerability-free application is made.
+
 ## Build and publishing note
 
 - Xcode Cloud is intentionally deactivated because the generated `ios/` directory is not committed to this repository.
 - Build and submit the iOS app with Expo EAS Build, not Xcode Cloud.
 - The Expo config suppresses third-party CocoaPods warning noise while keeping TapMiles source warnings visible. It also disables Xcode user-script sandboxing for the generated React Native resource scripts, which must write their generated resource lists during builds.
-- Before the first iOS build or App Store submission, change the iOS bundle identifier to `com.powerusa.tapmiles`. Do not change it after the App Store Connect app record has been established.
+- The existing iOS bundle identifier is `app.rork.tapmiles-mileage-tracker`. Preserve it for updates to the established App Store Connect app.
 - The Android application ID used by Google Play is `com.powerusa.tapmiles`.
-- The current Android release uses `versionCode` 2. Increase `versionCode` for every new Google Play upload (3, 4, 5, and so on).
+- This release uses Android `versionCode` 4. Increase it for every subsequent Google Play upload.
 - Android displays a prominent in-app disclosure before requesting background location access. Keep this disclosure in place and show it before the Android permission prompt.
 - Production Android bundles must be signed with the private upload key stored securely outside this repository. Back up that key and its credentials; never commit either one to GitHub.
 - Build Android with JDK 17. Newer Android Studio installations may bundle Java 25, which is not compatible with this project's current Gradle and React Native toolchain.

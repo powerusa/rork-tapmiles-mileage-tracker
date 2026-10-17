@@ -2,7 +2,7 @@
   "expo": {
     "name": "TapMiles Mileage Tracker",
     "slug": "tapmiles-mileage-tracker",
-    "version": "2.0.0",
+    "version": "3.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "rork-app",
@@ -14,7 +14,7 @@
       "backgroundColor": "#000000"
     },
     "ios": {
-      "buildNumber": "2",
+      "buildNumber": "3",
       "supportsTablet": true,
       "bundleIdentifier": "app.rork.tapmiles-mileage-tracker",
       "infoPlist": {
@@ -23,11 +23,15 @@
         ],
         "NSLocationAlwaysAndWhenInUseUsageDescription": "TapMiles needs your location to track mileage even when the app is in the background.",
         "NSLocationWhenInUseUsageDescription": "TapMiles needs your location to track your driving mileage.",
-        "NSLocationAlwaysUsageDescription": "TapMiles needs your location to track mileage even when the app is in the background."
+        "NSLocationAlwaysUsageDescription": "TapMiles needs your location to track mileage even when the app is in the background.",
+        "LSApplicationQueriesSchemes": [
+          "sms",
+          "mailto"
+        ]
       }
     },
     "android": {
-      "versionCode": 3,
+      "versionCode": 4,
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#000000"
@@ -64,7 +68,8 @@
       "expo-font",
       "expo-web-browser",
       "expo-localization",
-      "./plugins/with-ios-pod-warnings"
+      "./plugins/with-ios-pod-warnings",
+      "./plugins/with-ios-scenes"
     ],
     "experiments": {
       "typedRoutes": true

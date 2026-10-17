@@ -104,13 +104,15 @@ export default function ReportsScreen() {
 
     if (Platform.OS === 'web') {
       try {
-        const blob = new Blob([csv], { type: 'text/csv' });
+        const blob = new Blob(['\uFEFF', csv], { type: 'text/csv;charset=utf-8' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
         a.download = `tapmiles_export_${range}.csv`;
+        document.body.appendChild(a);
         a.click();
-        URL.revokeObjectURL(url);
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
       } catch {
         Alert.alert(t.error, t.exportNotSupported);
       }
@@ -244,7 +246,7 @@ export default function ReportsScreen() {
                   style={[
                     styles.bar,
                     {
-                      width: `${Math.max(barWidth, 2)}%` as unknown as number,
+                      width: `${Math.max(barWidth, data.distance > 0 ? 2 : 0)}%` as unknown as number,
                       backgroundColor: color,
                     },
                   ]}

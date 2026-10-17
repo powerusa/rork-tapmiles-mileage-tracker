@@ -8,10 +8,11 @@ import {
   StatusBar,
   ScrollView,
   RefreshControl,
+  Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Navigation, Clock, Gauge, Radio, ChevronRight, Car, ChevronDown } from 'lucide-react-native';
+import { Navigation, Clock, Gauge, ChevronRight, Car, ChevronDown } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTracking } from '@/providers/TrackingProvider';
 import { useTrips } from '@/providers/TripProvider';
@@ -25,6 +26,9 @@ export default function HomeScreen() {
   const { t } = useI18n();
   const {
     isTracking,
+    isRestoring,
+    isBusy,
+    pendingTrip,
     elapsedTime,
     distance,
     currentSpeed,
@@ -51,7 +55,7 @@ export default function HomeScreen() {
       duration: 600,
       useNativeDriver: true,
     }).start();
-  }, []);
+  }, [fadeAnim]);
 
   useEffect(() => {
     if (isTracking) {
@@ -93,9 +97,11 @@ export default function HomeScreen() {
       pulseAnim.setValue(1);
       ringAnim.setValue(0);
     }
-  }, [isTracking]);
+  }, [isTracking, pulseAnim, ringAnim]);
 
   const handlePress = async () => {
+    if (isBusy || isRestoring) return;
+    if (pendingTrip) { router.push('/save-trip'); return; }
     Animated.sequence([
       Animated.timing(scaleAnim, {
         toValue: 0.9,
@@ -111,13 +117,14 @@ export default function HomeScreen() {
 
     try {
       if (isTracking) {
-        await stopTracking();
-        router.push('/save-trip' as any);
+        const draft = await stopTracking();
+        if (draft) router.push('/save-trip');
       } else {
         await startTracking();
       }
     } catch (err) {
-      console.log('TapMiles: handlePress error:', err);
+      console.error('TapMiles: handlePress error:', err);
+      Alert.alert('Unable to stop trip', 'Your drive is still recorded. Please try again.');
     }
   };
 
@@ -232,7 +239,7 @@ export default function HomeScreen() {
               ],
             }}
           >
-            <Pressable onPress={handlePress} testID="tracking-button">
+            <Pressable onPress={handlePress} disabled={isBusy || isRestoring} accessibilityState={{ busy: isBusy }} testID="tracking-button">
               <LinearGradient
                 colors={
                   isTracking
@@ -244,10 +251,10 @@ export default function HomeScreen() {
                 style={styles.mainButton}
               >
                 <Text style={styles.buttonLabel}>
-                  {isTracking ? t.stop : t.start}
+                  {pendingTrip ? t.saveTrip : isTracking ? t.stop : t.start}
                 </Text>
                 <Text style={styles.buttonSub}>
-                  {isTracking ? t.andSave : t.drive}
+                  {pendingTrip ? '' : isTracking ? t.andSave : t.drive}
                 </Text>
               </LinearGradient>
             </Pressable>

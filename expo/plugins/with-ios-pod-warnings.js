@@ -32,12 +32,10 @@ module.exports = function withIosPodWarnings(config) {
         `prepare_react_native_project!\n\n${MARKER}\ninhibit_all_warnings!`
       );
     }
-    if (!podfileConfig.modResults.contents.includes("ENV['RCT_BUILD_HERMES_FROM_SOURCE']")) {
-      podfileConfig.modResults.contents = podfileConfig.modResults.contents.replace(
-        'prepare_react_native_project!',
-        "ENV['RCT_BUILD_HERMES_FROM_SOURCE'] = 'true'\n\nprepare_react_native_project!"
-      );
-    }
+    // Use the matching published Hermes binary; source builds require additional tools.
+    podfileConfig.modResults.contents = podfileConfig.modResults.contents.replace(
+      /^ENV\['RCT_BUILD_HERMES_FROM_SOURCE'\] = 'true'\s*$/m, ''
+    );
     if (!podfileConfig.modResults.contents.includes(POST_INSTALL_MARKER)) {
       podfileConfig.modResults.contents = podfileConfig.modResults.contents.replace(
         /(^  post_install do \|installer\|[\s\S]*?^  end$)/m,

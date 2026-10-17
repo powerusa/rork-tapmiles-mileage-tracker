@@ -8,7 +8,7 @@ import {
   RefreshControl,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Filter, Route } from 'lucide-react-native';
+import { Route } from 'lucide-react-native';
 import { useTrips } from '@/providers/TripProvider';
 import { useI18n } from '@/providers/I18nProvider';
 import { TripCard } from '@/components/TripCard';

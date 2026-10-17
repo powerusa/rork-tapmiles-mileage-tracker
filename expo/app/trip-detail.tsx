@@ -1,31 +1,105 @@
-import React, { useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable, Alert } from 'react-native';
+import React, { useMemo, useState, useRef } from 'react';
+import { View, Text, StyleSheet, ScrollView, Pressable, Alert, TextInput } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
-import { Navigation, Clock, Gauge, Calendar, Trash2, MapPin, Share2, MessageCircle, Mail, FileText } from 'lucide-react-native';
+import {
+  Navigation,
+  Clock,
+  Gauge,
+  Calendar,
+  Trash2,
+  MapPin,
+  Share2,
+  MessageCircle,
+  Mail,
+  FileText,
+  Pencil,
+} from 'lucide-react-native';
 import { useTrips } from '@/providers/TripProvider';
 import { useI18n } from '@/providers/I18nProvider';
+import type { TripPurpose } from '@/types/trip';
 import { Colors } from '@/constants/colors';
-import { formatDistance, formatDuration, formatDate, formatTime, formatDurationLong } from '@/utils/format';
-import { escapeHtml, shareByEmail, shareBySms, sharePdfFile, shareText, showShareError } from '@/utils/sharing';
+import {
+  formatDistance,
+  formatDuration,
+  formatDate,
+  formatTime,
+  formatDurationLong,
+} from '@/utils/format';
+import {
+  escapeHtml,
+  shareByEmail,
+  shareBySms,
+  sharePdfFile,
+  shareText,
+  showShareError,
+} from '@/utils/sharing';
 
 export default function TripDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { trips, deleteTrip, getProjectName, getVehicleName, settings } = useTrips();
+  const {
+    trips,
+    deleteTrip,
+    getProjectName,
+    getVehicleName,
+    settings,
+    canModifyTrip,
+    updateTrip,
+    projects,
+    vehicles,
+  } = useTrips();
   const { t } = useI18n();
 
   const trip = useMemo(() => trips.find((tr) => tr.id === id), [trips, id]);
 
+  const [editing, setEditing] = useState(false);
+  const [editNotes, setEditNotes] = useState('');
+  const [editPurpose, setEditPurpose] = useState<TripPurpose>('business');
+  const [editProject, setEditProject] = useState<string | null>(null);
+  const [editVehicle, setEditVehicle] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const savingRef = useRef(false);
+  const beginEditing = () => {
+    if (!trip || !canModifyTrip(trip)) return;
+    setEditNotes(trip.notes);
+    setEditPurpose(trip.purpose);
+    setEditProject(trip.projectId);
+    setEditVehicle(trip.vehicleId);
+    setEditing(true);
+  };
+  const saveEdits = async () => {
+    if (!trip || savingRef.current) return;
+    savingRef.current = true;
+    setSaving(true);
+    try {
+      await updateTrip(trip.id, {
+        notes: editNotes.trim(),
+        purpose: editPurpose,
+        projectId: editProject,
+        vehicleId: editVehicle,
+      });
+      setEditing(false);
+    } catch {
+      Alert.alert(t.error, 'Unable to update this trip. Check whether it is locked, then retry.');
+    } finally {
+      savingRef.current = false;
+      setSaving(false);
+    }
+  };
   const handleDelete = () => {
     Alert.alert(t.deleteTrip, t.deleteTripMsg, [
       { text: t.cancel, style: 'cancel' },
       {
         text: t.delete,
         style: 'destructive',
-        onPress: () => {
-          if (trip) {
-            deleteTrip(trip.id);
-            router.back();
+        onPress: async () => {
+          if (trip && canModifyTrip(trip)) {
+            try {
+              await deleteTrip(trip.id);
+              router.back();
+            } catch {
+              Alert.alert(t.error, 'Unable to delete trip. Please retry.');
+            }
           }
         },
       },
@@ -53,9 +127,8 @@ export default function TripDetailScreen() {
   const projectName = getProjectName(trip.projectId);
   const vehicleName = getVehicleName(trip.vehicleId);
   const avgSpeedMph = trip.duration > 0 ? trip.distance / (trip.duration / 3600) : 0;
-  const avgSpeed = settings.distanceUnit === 'km'
-    ? (avgSpeedMph * 1.60934).toFixed(1)
-    : avgSpeedMph.toFixed(1);
+  const avgSpeed =
+    settings.distanceUnit === 'km' ? (avgSpeedMph * 1.60934).toFixed(1) : avgSpeedMph.toFixed(1);
   const distanceUnit = settings.distanceUnit === 'km' ? 'km' : 'mi';
   const distance = `${formatDistance(trip.distance, settings.rounding, settings.distanceUnit)} ${distanceUnit}`;
   const subject = `TapMiles trip – ${formatDate(trip.startTime)}`;
@@ -68,7 +141,9 @@ export default function TripDetailScreen() {
     `Vehicle: ${vehicleName ?? 'Not selected'}`,
     `Project: ${projectName ?? 'None'}`,
     trip.notes ? `Notes: ${trip.notes}` : null,
-  ].filter(Boolean).join('\n');
+  ]
+    .filter(Boolean)
+    .join('\n');
 
   const handleShare = async () => {
     try {
@@ -105,7 +180,11 @@ export default function TripDetailScreen() {
       ['Project', projectName ?? 'None'],
       ['GPS points', trip.routePoints.length],
       ['Notes', trip.notes || '—'],
-    ].map(([label, value]) => `<tr><th>${escapeHtml(label)}</th><td>${escapeHtml(value)}</td></tr>`).join('');
+    ]
+      .map(
+        ([label, value]) => `<tr><th>${escapeHtml(label)}</th><td>${escapeHtml(value)}</td></tr>`,
+      )
+      .join('');
     const html = `<!doctype html><html><head><meta charset="utf-8"><style>
       @page { margin: 42px; } body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; color: #17202a; }
       h1 { color: #00a978; margin-bottom: 4px; } .distance { font-size: 34px; font-weight: 800; margin: 12px 0 24px; }
@@ -115,7 +194,11 @@ export default function TripDetailScreen() {
       <div class="distance">${escapeHtml(distance)}</div><table>${detailRows}</table>
       <p class="footer">Generated by TapMiles Mileage Tracker</p></body></html>`;
     try {
-      await sharePdfFile(`TapMiles-trip-${new Date(trip.startTime).toISOString().slice(0, 10)}.pdf`, html, 'Share TapMiles trip PDF');
+      await sharePdfFile(
+        `TapMiles-trip-${new Date(trip.startTime).toISOString().slice(0, 10)}.pdf`,
+        html,
+        'Share TapMiles trip PDF',
+      );
     } catch (error) {
       showShareError(error);
     }
@@ -128,32 +211,115 @@ export default function TripDetailScreen() {
           title: formatDate(trip.startTime),
           headerRight: () => (
             <View style={styles.headerActions}>
+              <Pressable
+                onPress={beginEditing}
+                disabled={!canModifyTrip(trip) || saving}
+                hitSlop={8}
+                accessibilityLabel="Edit trip"
+                style={{ opacity: canModifyTrip(trip) ? 1 : 0.35 }}
+              >
+                <Pencil size={20} color={Colors.accent} />
+              </Pressable>
               <Pressable onPress={handleShare} hitSlop={8} accessibilityLabel="Share trip">
                 <Share2 size={20} color={Colors.accent} />
               </Pressable>
-              <Pressable onPress={handleDelete} hitSlop={8} accessibilityLabel="Delete trip">
+              <Pressable
+                disabled={!canModifyTrip(trip)}
+                style={{ opacity: canModifyTrip(trip) ? 1 : 0.35 }}
+                onPress={handleDelete}
+                hitSlop={8}
+                accessibilityLabel="Delete trip"
+              >
                 <Trash2 size={20} color={Colors.danger} />
               </Pressable>
             </View>
           ),
         }}
       />
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+        {editing && (
+          <View style={[styles.notesSection, { gap: 12, marginBottom: 16 }]}>
+            <Text style={styles.notesSectionLabel}>{t.purpose}</Text>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
+              {(['business', 'personal', 'medical', 'charity'] as TripPurpose[]).map((purpose) => (
+                <Pressable key={purpose} disabled={saving} onPress={() => setEditPurpose(purpose)}>
+                  <Text
+                    style={{
+                      color: editPurpose === purpose ? Colors.accent : Colors.textSecondary,
+                    }}
+                  >
+                    {t[purpose]}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+            <Text style={styles.notesSectionLabel}>{t.project}</Text>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
+              {[{ id: null, name: t.none }, ...projects].map((project) => (
+                <Pressable
+                  key={project.id ?? 'none'}
+                  disabled={saving}
+                  onPress={() => setEditProject(project.id)}
+                >
+                  <Text
+                    style={{
+                      color: editProject === project.id ? Colors.accent : Colors.textSecondary,
+                    }}
+                  >
+                    {project.name}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+            <Text style={styles.notesSectionLabel}>{t.vehicle}</Text>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
+              {[{ id: null, name: t.none }, ...vehicles].map((vehicle) => (
+                <Pressable
+                  key={vehicle.id ?? 'none'}
+                  disabled={saving}
+                  onPress={() => setEditVehicle(vehicle.id)}
+                >
+                  <Text
+                    style={{
+                      color: editVehicle === vehicle.id ? Colors.accent : Colors.textSecondary,
+                    }}
+                  >
+                    {vehicle.name}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+            <TextInput
+              value={editNotes}
+              onChangeText={setEditNotes}
+              editable={!saving}
+              multiline
+              placeholder={t.notes}
+              placeholderTextColor={Colors.textMuted}
+              style={[
+                styles.notesText,
+                { minHeight: 80, borderWidth: 1, borderColor: Colors.border, padding: 10 },
+              ]}
+            />
+            <Pressable onPress={saveEdits} disabled={saving}>
+              <Text style={{ color: Colors.accent }}>{t.save}</Text>
+            </Pressable>
+            <Pressable onPress={() => setEditing(false)} disabled={saving}>
+              <Text style={{ color: Colors.textSecondary }}>{t.cancel}</Text>
+            </Pressable>
+          </View>
+        )}
+
         <View style={styles.heroCard}>
-          <View
-            style={[
-              styles.purposeBadge,
-              { backgroundColor: purposeColor + '20' },
-            ]}
-          >
-            <Text style={[styles.purposeText, { color: purposeColor }]}>
-              {purposeLabel}
-            </Text>
+          <View style={[styles.purposeBadge, { backgroundColor: purposeColor + '20' }]}>
+            <Text style={[styles.purposeText, { color: purposeColor }]}>{purposeLabel}</Text>
           </View>
           <Text style={styles.heroDistance}>
             {formatDistance(trip.distance, settings.rounding, settings.distanceUnit)}
           </Text>
-          <Text style={styles.heroUnit}>{settings.distanceUnit === 'km' ? t.kilometers : t.miles}</Text>
+          <Text style={styles.heroUnit}>
+            {settings.distanceUnit === 'km' ? t.kilometers : t.miles}
+          </Text>
         </View>
 
         <View style={styles.statsGrid}>
@@ -165,7 +331,9 @@ export default function TripDetailScreen() {
           <View style={styles.statCard}>
             <Gauge size={18} color={Colors.accent} />
             <Text style={styles.statValue}>{avgSpeed}</Text>
-            <Text style={styles.statLabel}>{settings.distanceUnit === 'km' ? t.avgKmh : t.avgMph}</Text>
+            <Text style={styles.statLabel}>
+              {settings.distanceUnit === 'km' ? t.avgKmh : t.avgMph}
+            </Text>
           </View>
           <View style={styles.statCard}>
             <MapPin size={18} color={Colors.accent} />
@@ -178,9 +346,7 @@ export default function TripDetailScreen() {
           <View style={styles.detailRow}>
             <Calendar size={16} color={Colors.textSecondary} />
             <Text style={styles.detailLabel}>{t.date}</Text>
-            <Text style={styles.detailValue}>
-              {formatDate(trip.startTime)}
-            </Text>
+            <Text style={styles.detailValue}>{formatDate(trip.startTime)}</Text>
           </View>
           <View style={styles.divider} />
           <View style={styles.detailRow}>
@@ -223,19 +389,31 @@ export default function TripDetailScreen() {
 
         <Text style={styles.shareTitle}>SHARE TRIP</Text>
         <View style={styles.shareGrid}>
-          <Pressable style={({ pressed }) => [styles.shareButton, pressed && styles.buttonPressed]} onPress={handleSms}>
+          <Pressable
+            style={({ pressed }) => [styles.shareButton, pressed && styles.buttonPressed]}
+            onPress={handleSms}
+          >
             <MessageCircle size={20} color={Colors.accent} />
             <Text style={styles.shareButtonText}>SMS</Text>
           </Pressable>
-          <Pressable style={({ pressed }) => [styles.shareButton, pressed && styles.buttonPressed]} onPress={handleEmail}>
+          <Pressable
+            style={({ pressed }) => [styles.shareButton, pressed && styles.buttonPressed]}
+            onPress={handleEmail}
+          >
             <Mail size={20} color={Colors.accent} />
             <Text style={styles.shareButtonText}>Email</Text>
           </Pressable>
-          <Pressable style={({ pressed }) => [styles.shareButton, pressed && styles.buttonPressed]} onPress={handlePdf}>
+          <Pressable
+            style={({ pressed }) => [styles.shareButton, pressed && styles.buttonPressed]}
+            onPress={handlePdf}
+          >
             <FileText size={20} color={Colors.accent} />
             <Text style={styles.shareButtonText}>PDF</Text>
           </Pressable>
-          <Pressable style={({ pressed }) => [styles.shareButton, pressed && styles.buttonPressed]} onPress={handleShare}>
+          <Pressable
+            style={({ pressed }) => [styles.shareButton, pressed && styles.buttonPressed]}
+            onPress={handleShare}
+          >
             <Share2 size={20} color={Colors.accent} />
             <Text style={styles.shareButtonText}>More</Text>
           </Pressable>

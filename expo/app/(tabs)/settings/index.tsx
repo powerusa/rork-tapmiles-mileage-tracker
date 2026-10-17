@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import Constants from 'expo-constants';
 import {
   View,
   Text,
@@ -446,7 +447,7 @@ export default function SettingsScreen() {
         </Text>
       </View>
 
-      <Text style={styles.versionText}>TapMiles v1.0.0</Text>
+      <Text style={styles.versionText}>TapMiles v{Constants.expoConfig?.version ?? '3.0.0'}</Text>
     </ScrollView>
   );
 }

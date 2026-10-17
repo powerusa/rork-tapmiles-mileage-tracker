@@ -1,32 +1,32 @@
-import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { Platform, AppState, AppStateStatus, Alert, Linking } from 'react-native';
+import { useState, useRef, useCallback, useEffect } from 'react';
+import { Platform, AppState, Alert, Linking } from 'react-native';
 import createContextHook from '@nkzw/create-context-hook';
 import * as Location from 'expo-location';
 import * as Haptics from 'expo-haptics';
-import { RoutePoint, TripDraft } from '@/types/trip';
-import { haversineDistance, metersPerSecondToMph } from '@/utils/location';
+import type { RoutePoint, TripDraft } from '@/types/trip';
+import { metersPerSecondToMph } from '@/utils/location';
 import {
   BACKGROUND_LOCATION_TASK,
   getPersistedState,
   persistState,
+  changeTrackingState,
   clearPersistedState,
+  recordLocations,
   PersistedTrackingState,
 } from '@/utils/backgroundLocation';
-
 export type GpsStatus = 'off' | 'searching' | 'active' | 'poor';
-
-const showBackgroundLocationDisclosure = (): Promise<boolean> =>
-  new Promise((resolve) => {
+const disclosure = () =>
+  new Promise<boolean>((resolve) =>
     Alert.alert(
       'Location access for trip tracking',
-      'TapMiles collects location data to calculate and record your mileage while a trip is active, even when the app is closed or not in use. Location tracking starts only when you tap “START DRIVE” and stops when you tap “STOP & SAVE.” A notification remains visible while a trip is being recorded.',
+      'TapMiles records location to calculate your mileage while a drive is active, including in the background. Tracking starts when you tap START DRIVE and stops when you tap STOP & SAVE. A notification remains visible while recording.',
       [
         { text: 'Not now', style: 'cancel', onPress: () => resolve(false) },
         { text: 'Continue', onPress: () => resolve(true) },
       ],
-      { cancelable: false }
-    );
-  });
+      { cancelable: false },
+    ),
+  );
 
 export const [TrackingProvider, useTracking] = createContextHook(() => {
   const [isTracking, setIsTracking] = useState(false);
@@ -36,358 +36,265 @@ export const [TrackingProvider, useTracking] = createContextHook(() => {
   const [gpsStatus, setGpsStatus] = useState<GpsStatus>('off');
   const [pendingTrip, setPendingTrip] = useState<TripDraft | null>(null);
   const [isRestoring, setIsRestoring] = useState(true);
-
-  const routePointsRef = useRef<RoutePoint[]>([]);
-  const lastPointRef = useRef<RoutePoint | null>(null);
-  const startTimeRef = useRef<number>(0);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const locationSubRef = useRef<Location.LocationSubscription | null>(null);
+  const [isBusy, setIsBusy] = useState(false);
+  const [trackingError, setTrackingError] = useState<unknown>(null);
+  const stateRef = useRef<PersistedTrackingState | null>(null);
+  const busyRef = useRef(false);
+  const watchRef = useRef<Location.LocationSubscription | null>(null);
   const webWatchRef = useRef<number | null>(null);
-  const distanceRef = useRef(0);
-
-  const syncFromPersistedState = useCallback(async () => {
-    const saved = await getPersistedState();
-    if (saved && saved.isTracking) {
-      console.log('TapMiles: Restoring tracking session from background');
-      startTimeRef.current = saved.startTime;
-      distanceRef.current = saved.distance;
-      routePointsRef.current = saved.routePoints;
-      lastPointRef.current = saved.lastPoint;
-      setDistance(saved.distance);
-      setIsTracking(true);
-      setGpsStatus('active');
-      setElapsedTime(Math.floor((Date.now() - saved.startTime) / 1000));
-      return true;
-    }
-    return false;
+  const mounted = useRef(true);
+  const applyState = useCallback((state: PersistedTrackingState | null) => {
+    if (!mounted.current) return;
+    stateRef.current = state;
+    setIsTracking(state?.isTracking ?? false);
+    setDistance(state?.distance ?? 0);
+    setPendingTrip(state?.pendingTrip ?? null);
+    setElapsedTime(state ? Math.max(0, Math.floor((Date.now() - state.startTime) / 1000)) : 0);
   }, []);
-
-  useEffect(() => {
-    const restore = async () => {
-      if (Platform.OS === 'web') {
-        setIsRestoring(false);
-        return;
-      }
-      const restored = await syncFromPersistedState();
-      if (restored) {
-        startTimer();
-        startForegroundWatch();
-      }
-      setIsRestoring(false);
-    };
-    restore();
-  }, []);
-
-  useEffect(() => {
-    const handleAppState = async (nextState: AppStateStatus) => {
-      if (nextState === 'active' && Platform.OS !== 'web') {
-        const saved = await getPersistedState();
-        if (saved && saved.isTracking) {
-          console.log('TapMiles: App foregrounded, syncing persisted state');
-          distanceRef.current = saved.distance;
-          routePointsRef.current = saved.routePoints;
-          lastPointRef.current = saved.lastPoint;
-          setDistance(saved.distance);
-          setElapsedTime(Math.floor((Date.now() - saved.startTime) / 1000));
-        }
-      }
-    };
-
-    const sub = AppState.addEventListener('change', handleAppState);
-    return () => sub.remove();
-  }, []);
-
-  const startTimer = useCallback(() => {
-    if (timerRef.current) clearInterval(timerRef.current);
-    timerRef.current = setInterval(() => {
-      if (startTimeRef.current > 0) {
-        setElapsedTime(Math.floor((Date.now() - startTimeRef.current) / 1000));
-      }
-    }, 1000);
-  }, []);
-
-  const startForegroundWatch = useCallback(async () => {
-    if (Platform.OS === 'web') return;
-    try {
-      if (locationSubRef.current) {
-        locationSubRef.current.remove();
-        locationSubRef.current = null;
-      }
-      locationSubRef.current = await Location.watchPositionAsync(
-        {
-          accuracy: Location.Accuracy.BestForNavigation,
-          distanceInterval: 10,
-          timeInterval: 5000,
-        },
-        (location) => {
-          const point: RoutePoint = {
-            latitude: location.coords.latitude,
-            longitude: location.coords.longitude,
-            timestamp: location.timestamp,
-            speed: location.coords.speed ?? 0,
-            accuracy: location.coords.accuracy ?? 999,
-          };
-
-          if (point.accuracy > 50) {
-            setGpsStatus('poor');
-            return;
-          }
-
-          setGpsStatus('active');
-          const speedMph = Math.max(0, metersPerSecondToMph(point.speed));
-          setCurrentSpeed(speedMph);
-
-          if (lastPointRef.current) {
-            const d = haversineDistance(
-              lastPointRef.current.latitude,
-              lastPointRef.current.longitude,
-              point.latitude,
-              point.longitude
-            );
-            if (d > 0.001 && d < 0.5) {
-              distanceRef.current += d;
-              setDistance(distanceRef.current);
-            }
-          }
-
-          lastPointRef.current = point;
-          routePointsRef.current.push(point);
-
-          persistState({
-            isTracking: true,
-            startTime: startTimeRef.current,
-            distance: distanceRef.current,
-            routePoints: routePointsRef.current.slice(-5000),
-            lastPoint: point,
-          });
-        }
-      );
-    } catch (err) {
-      console.log('TapMiles: Foreground location watch error:', err);
-      setGpsStatus('poor');
-    }
-  }, []);
-
-  const startBackgroundLocation = useCallback(async () => {
-    if (Platform.OS === 'web') return;
-    try {
-      const bgPermission = await Location.requestBackgroundPermissionsAsync();
-      if (bgPermission.status !== 'granted') {
-        console.log('TapMiles: Background location permission denied, foreground-only tracking');
-        return;
-      }
-
-      const isRunning = await Location.hasStartedLocationUpdatesAsync(BACKGROUND_LOCATION_TASK).catch(() => false);
-      if (isRunning) {
-        console.log('TapMiles: Background location already running');
-        return;
-      }
-
-      await Location.startLocationUpdatesAsync(BACKGROUND_LOCATION_TASK, {
-        accuracy: Location.Accuracy.BestForNavigation,
-        distanceInterval: 10,
-        deferredUpdatesInterval: 5000,
-        showsBackgroundLocationIndicator: true,
-        foregroundService: {
-          notificationTitle: 'TapMiles',
-          notificationBody: 'Recording your trip in the background...',
-          notificationColor: '#00D68F',
-        },
-        activityType: Location.ActivityType.AutomotiveNavigation,
-        pausesUpdatesAutomatically: false,
-      });
-      console.log('TapMiles: Background location started');
-    } catch (err) {
-      console.log('TapMiles: Failed to start background location:', err);
-    }
-  }, []);
-
-  const stopBackgroundLocation = useCallback(async () => {
-    if (Platform.OS === 'web') return;
-    try {
-      const isRunning = await Location.hasStartedLocationUpdatesAsync(BACKGROUND_LOCATION_TASK).catch(() => false);
-      if (isRunning) {
-        await Location.stopLocationUpdatesAsync(BACKGROUND_LOCATION_TASK);
-        console.log('TapMiles: Background location stopped');
-      }
-    } catch (err) {
-      console.log('TapMiles: Failed to stop background location:', err);
-    }
-  }, []);
-
-  const startTracking = useCallback(async () => {
-    try {
-      if (Platform.OS !== 'web') {
-        if (Platform.OS === 'android') {
-          const backgroundPermission = await Location.getBackgroundPermissionsAsync();
-          if (backgroundPermission.status !== 'granted') {
-            const acceptedDisclosure = await showBackgroundLocationDisclosure();
-            if (!acceptedDisclosure) return false;
-          }
-        }
-
-        const { status } = await Location.requestForegroundPermissionsAsync();
-        if (status !== 'granted') {
-          console.log('TapMiles: Location permission denied');
-          Alert.alert(
-            'Location Permission Required',
-            'TapMiles needs location access to track your drive. Please enable location permissions in Settings.',
-            [
-              { text: 'Cancel', style: 'cancel' },
-              { text: 'Open Settings', onPress: () => Linking.openSettings() },
-            ]
-          );
-          return false;
-        }
-      }
-
-      routePointsRef.current = [];
-      lastPointRef.current = null;
-      distanceRef.current = 0;
-      startTimeRef.current = Date.now();
-      setDistance(0);
-      setElapsedTime(0);
-      setCurrentSpeed(0);
-      setGpsStatus('searching');
-      setIsTracking(true);
-      setPendingTrip(null);
-
-      try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy); } catch (_) {}
-
-      await persistState({
-        isTracking: true,
-        startTime: startTimeRef.current,
-        distance: 0,
-        routePoints: [],
-        lastPoint: null,
-      });
-
-      startTimer();
-
-      if (Platform.OS !== 'web') {
-        await startForegroundWatch();
-        await startBackgroundLocation();
-      } else {
-        setGpsStatus('active');
-        if ('geolocation' in navigator) {
-          webWatchRef.current = navigator.geolocation.watchPosition(
-            (position) => {
-              const point: RoutePoint = {
-                latitude: position.coords.latitude,
-                longitude: position.coords.longitude,
-                timestamp: position.timestamp,
-                speed: position.coords.speed ?? 0,
-                accuracy: position.coords.accuracy ?? 999,
-              };
-
-              if (point.accuracy > 100) return;
-
-              setGpsStatus('active');
-              const speedMph = Math.max(0, metersPerSecondToMph(point.speed));
-              setCurrentSpeed(speedMph);
-
-              if (lastPointRef.current) {
-                const d = haversineDistance(
-                  lastPointRef.current.latitude,
-                  lastPointRef.current.longitude,
-                  point.latitude,
-                  point.longitude
-                );
-                if (d > 0.001 && d < 0.5) {
-                  distanceRef.current += d;
-                  setDistance(distanceRef.current);
-                }
-              }
-
-              lastPointRef.current = point;
-              routePointsRef.current.push(point);
-            },
-            (err) => {
-              console.log('TapMiles: Web geolocation error:', err);
-            },
-            { enableHighAccuracy: true, maximumAge: 5000 }
-          );
-        }
-      }
-
-      return true;
-    } catch (err) {
-      console.log('TapMiles: startTracking error:', err);
-      setIsTracking(false);
-      setGpsStatus('off');
-      Alert.alert('Unable to Start', 'An error occurred while starting the trip. Please try again.');
-      return false;
-    }
-  }, [startTimer, startForegroundWatch, startBackgroundLocation]);
-
-  const stopTracking = useCallback(async () => {
-    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy); } catch (_) {}
-
-    if (Platform.OS !== 'web') {
-      const saved = await getPersistedState();
-      if (saved && saved.isTracking) {
-        distanceRef.current = saved.distance;
-        routePointsRef.current = saved.routePoints;
-        lastPointRef.current = saved.lastPoint;
-      }
-    }
-
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
-    }
-
-    if (locationSubRef.current) {
-      locationSubRef.current.remove();
-      locationSubRef.current = null;
-    }
-
-    if (webWatchRef.current !== null && Platform.OS === 'web' && 'geolocation' in navigator) {
+  const removeWatch = useCallback(() => {
+    watchRef.current?.remove();
+    watchRef.current = null;
+    if (webWatchRef.current !== null && Platform.OS === 'web') {
       navigator.geolocation.clearWatch(webWatchRef.current);
       webWatchRef.current = null;
     }
-
-    await stopBackgroundLocation();
-    await clearPersistedState();
-
-    const endTime = Date.now();
-    const duration = Math.floor((endTime - startTimeRef.current) / 1000);
-
-    const draft: TripDraft = {
-      startTime: startTimeRef.current,
-      endTime,
-      distance: distanceRef.current,
-      duration,
-      routePoints: [...routePointsRef.current],
-    };
-
-    setPendingTrip(draft);
-    setIsTracking(false);
-    setGpsStatus('off');
-    setCurrentSpeed(0);
-
-    console.log('TapMiles: Trip stopped. Distance:', distanceRef.current, 'Duration:', duration);
-
-    return draft;
-  }, [stopBackgroundLocation]);
-
-  const clearPendingTrip = useCallback(() => {
-    setPendingTrip(null);
   }, []);
-
-  useEffect(() => {
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-      if (locationSubRef.current) locationSubRef.current.remove();
-      if (webWatchRef.current !== null && Platform.OS === 'web' && 'geolocation' in navigator) {
-        navigator.geolocation.clearWatch(webWatchRef.current);
+  const onLocation = useCallback(
+    async (point: RoutePoint) => {
+      const session = stateRef.current?.startTime;
+      if (!stateRef.current?.isTracking || busyRef.current) return;
+      setGpsStatus(point.accuracy > 50 ? 'poor' : 'active');
+      setCurrentSpeed(Math.max(0, metersPerSecondToMph(point.speed)));
+      try {
+        const state = await recordLocations([point]);
+        if (!busyRef.current && state?.isTracking && state.startTime === session) applyState(state);
+      } catch (error) {
+        setTrackingError(error);
+        setGpsStatus('poor');
       }
-    };
+    },
+    [applyState],
+  );
+  const startWatch = useCallback(async () => {
+    removeWatch();
+    if (Platform.OS === 'web') {
+      if (!navigator.geolocation) throw new Error('Geolocation is unavailable in this browser.');
+      webWatchRef.current = navigator.geolocation.watchPosition(
+        (position) => {
+          void onLocation({
+            ...position.coords,
+            timestamp: position.timestamp,
+            speed: position.coords.speed ?? 0,
+            accuracy: position.coords.accuracy ?? 999,
+          });
+        },
+        () => setGpsStatus('poor'),
+        { enableHighAccuracy: true, maximumAge: 0 },
+      );
+      return;
+    }
+    const subscription = await Location.watchPositionAsync(
+      { accuracy: Location.Accuracy.BestForNavigation, distanceInterval: 10, timeInterval: 5000 },
+      (location) => {
+        void onLocation({
+          latitude: location.coords.latitude,
+          longitude: location.coords.longitude,
+          timestamp: location.timestamp,
+          speed: location.coords.speed ?? 0,
+          accuracy: location.coords.accuracy ?? 999,
+        });
+      },
+      () => setGpsStatus('poor'),
+    );
+    if (!mounted.current || !stateRef.current?.isTracking) subscription.remove();
+    else watchRef.current = subscription;
+  }, [removeWatch, onLocation]);
+  const stopBackground = useCallback(async () => {
+    if (
+      Platform.OS !== 'web' &&
+      (await Location.hasStartedLocationUpdatesAsync(BACKGROUND_LOCATION_TASK))
+    )
+      await Location.stopLocationUpdatesAsync(BACKGROUND_LOCATION_TASK);
   }, []);
-
+  const restore = useCallback(async () => {
+    setIsRestoring(true);
+    try {
+      const state = await getPersistedState();
+      applyState(state);
+      if (state?.isTracking) {
+        setGpsStatus('searching');
+        await startWatch();
+      }
+      setTrackingError(null);
+    } catch (error) {
+      setTrackingError(error);
+    } finally {
+      setIsRestoring(false);
+    }
+  }, [applyState, startWatch]);
+  useEffect(() => {
+    mounted.current = true;
+    void restore();
+    const timer = setInterval(() => {
+      if (stateRef.current?.isTracking)
+        setElapsedTime(Math.max(0, Math.floor((Date.now() - stateRef.current.startTime) / 1000)));
+    }, 1000);
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state === 'active' && !busyRef.current)
+        void getPersistedState()
+          .then((saved) => {
+            if (!busyRef.current) applyState(saved);
+          })
+          .catch(setTrackingError);
+    });
+    return () => {
+      mounted.current = false;
+      clearInterval(timer);
+      removeWatch();
+      subscription.remove();
+    };
+  }, [restore, applyState, removeWatch]);
+  const startTracking = useCallback(async () => {
+    if (
+      busyRef.current ||
+      isRestoring ||
+      stateRef.current?.isTracking ||
+      stateRef.current?.pendingTrip
+    )
+      return false;
+    busyRef.current = true;
+    setIsBusy(true);
+    try {
+      if (Platform.OS !== 'web') {
+        if (
+          Platform.OS === 'android' &&
+          (await Location.getBackgroundPermissionsAsync()).status !== 'granted' &&
+          !(await disclosure())
+        )
+          return false;
+        if ((await Location.requestForegroundPermissionsAsync()).status !== 'granted') {
+          Alert.alert(
+            'Location Permission Required',
+            'Enable location access in Settings to track a drive.',
+            [
+              { text: 'Cancel', style: 'cancel' },
+              {
+                text: 'Open Settings',
+                onPress: () => {
+                  void Linking.openSettings();
+                },
+              },
+            ],
+          );
+          return false;
+        }
+        if (!(await Location.hasServicesEnabledAsync()))
+          throw new Error('Location services are disabled.');
+      }
+      const state: PersistedTrackingState = {
+        isTracking: true,
+        startTime: Date.now(),
+        distance: 0,
+        routePoints: [],
+        lastPoint: null,
+        pendingTrip: null,
+      };
+      await persistState(state);
+      applyState(state);
+      setGpsStatus('searching');
+      await startWatch();
+      if (Platform.OS !== 'web') {
+        try {
+          if ((await Location.requestBackgroundPermissionsAsync()).status === 'granted') {
+            if (!(await Location.hasStartedLocationUpdatesAsync(BACKGROUND_LOCATION_TASK)))
+              await Location.startLocationUpdatesAsync(BACKGROUND_LOCATION_TASK, {
+                accuracy: Location.Accuracy.BestForNavigation,
+                distanceInterval: 10,
+                deferredUpdatesInterval: 5000,
+                showsBackgroundLocationIndicator: true,
+                activityType: Location.ActivityType.AutomotiveNavigation,
+                pausesUpdatesAutomatically: false,
+                foregroundService: {
+                  notificationTitle: 'TapMiles',
+                  notificationBody: 'Recording your trip in the background...',
+                  notificationColor: '#00D68F',
+                },
+              });
+          } else
+            Alert.alert(
+              'Foreground tracking only',
+              'Keep TapMiles open to record this drive. Background location permission has not been granted.',
+            );
+        } catch {
+          Alert.alert(
+            'Foreground tracking only',
+            'Background tracking could not start. Keep TapMiles open to record this drive.',
+          );
+        }
+      }
+      setTrackingError(null);
+      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy).catch(() => undefined);
+      return true;
+    } catch (error) {
+      removeWatch();
+      await stopBackground().catch(() => undefined);
+      await clearPersistedState().catch(setTrackingError);
+      applyState(null);
+      setGpsStatus('off');
+      Alert.alert('Unable to Start', error instanceof Error ? error.message : 'Please try again.');
+      return false;
+    } finally {
+      busyRef.current = false;
+      setIsBusy(false);
+    }
+  }, [isRestoring, applyState, startWatch, removeWatch, stopBackground]);
+  const stopTracking = useCallback(async () => {
+    if (busyRef.current || !stateRef.current?.isTracking) return null;
+    busyRef.current = true;
+    setIsBusy(true);
+    try {
+      removeWatch();
+      await stopBackground();
+      const state = await changeTrackingState((saved) => {
+        if (!saved?.isTracking) return saved;
+        const endTime = Date.now();
+        return {
+          ...saved,
+          isTracking: false,
+          pendingTrip: {
+            startTime: saved.startTime,
+            endTime,
+            distance: saved.distance,
+            duration: Math.max(0, Math.floor((endTime - saved.startTime) / 1000)),
+            routePoints: saved.routePoints,
+          },
+        };
+      });
+      applyState(state);
+      setGpsStatus('off');
+      setCurrentSpeed(0);
+      setTrackingError(null);
+      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy).catch(() => undefined);
+      return state?.pendingTrip ?? null;
+    } catch (error) {
+      setTrackingError(error);
+      await startWatch().catch(() => undefined);
+      throw error;
+    } finally {
+      busyRef.current = false;
+      setIsBusy(false);
+    }
+  }, [applyState, removeWatch, startWatch, stopBackground]);
+  const clearPendingTrip = useCallback(async () => {
+    await clearPersistedState();
+    applyState(null);
+  }, [applyState]);
   return {
     isTracking,
     isRestoring,
+    isBusy,
+    trackingError,
+    restore,
     elapsedTime,
     distance,
     currentSpeed,
